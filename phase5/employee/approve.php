@@ -29,18 +29,21 @@ if ( !isset($_SESSION['user_email']) || !isset($_SESSION['user_level']) || !isse
 	$user->getUserDataFromEmail( $_SESSION['user_email'] );
 	
 	$submitSucces = false;
-	
-	if(isset($_POST['transactions'])) {
-		$user->approveTransactions($_POST['transactions']);
-		$submitMessage = "Approval was successful!";
-	}
-	
-	if( isset( $_POST['users'] ) ) {
-		try {
-		$user->approveUsers( $_POST );
-		$submitMessage = "Approval was successful!";
-		} catch ( InvalidInputException $ex ) {
-			$submitMessage = $ex->errorMessage();
+	if (isset($_POST['approve'])) {
+		$submitMessage = "Please select what to approve.";
+
+		if(isset($_POST['transactions'])) {
+			$user->approveTransactions($_POST['transactions']);
+			$submitMessage = "Approval was successful!";
+		}
+		
+		if( isset( $_POST['users'] ) ) {
+			try {
+			$user->approveUsers( $_POST );
+			$submitMessage = "Approval was successful!";
+			} catch ( InvalidInputException $ex ) {
+				$submitMessage = $ex->errorMessage();
+			}
 		}
 	}
 	
@@ -71,9 +74,11 @@ if ( !isset($_SESSION['user_email']) || !isset($_SESSION['user_level']) || !isse
 		
 		<div class="main">
 		<form method="post">
-		<?php 
-			echo $submitMessage."<br />";
-			echo "Currently Inapproved Transactions";
+		<?php
+			if (isset($submitMessage))  {
+				echo $submitMessage."<br />";
+			}
+			echo "Currently unapproved Transactions";
 			
 			$transactions = $user->getInApprovedTransactions();
 			$odd = true;
@@ -116,7 +121,7 @@ if ( !isset($_SESSION['user_email']) || !isset($_SESSION['user_level']) || !isse
 			<br>
 			
 		<?php 
-			echo "Currently Inapproved Users";
+			echo "Currently unapproved Users";
 			
 			$users = $user->getInApprovedUsers();
 			$odd = true;
