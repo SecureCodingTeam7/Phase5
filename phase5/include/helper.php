@@ -213,7 +213,7 @@ function query_time_server ($timeserver, $socket)
 
 	function getUTCTime(){
 	
-		$timeserver = "ptbtime1.ptb.de";
+		$timeserver = "129.6.15.28";
 		$timercvd = query_time_server($timeserver, 37);
 
 	//if no error from query_time_server
