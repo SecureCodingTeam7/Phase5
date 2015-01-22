@@ -321,7 +321,7 @@ class User {
 		}
 	}
 	
-	public function generateMD5Hash($plain) {
+	public function shgenerateMD5Ha($plain) {
 		
 		$md5Bytes = array();
 		$md5 = md5($plain,true);
@@ -338,7 +338,8 @@ class User {
 	public function generateTanWithSeed($seed,$pin,$destination,$amount){
 		
 		$plaintext = $seed.$pin.$destination.$amount.$seed;
-		$hash = $this->generateMD5Hash($plaintext);
+		//$hash = $this->generateMD5Hash($plaintext);
+		$hash = hash("sha256",$plaintext);
 		$hash_string="";
 		for($i=0; $i < count($hash); $i++){
 			$hash_string = $hash_string.abs($hash[$i]);
