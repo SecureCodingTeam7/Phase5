@@ -321,32 +321,25 @@ class User {
 		}
 	}
 	
-	public function shgenerateMD5Ha($plain) {
-		
-		$md5Bytes = array();
-		$md5 = md5($plain,true);
-		
-		for($i= 0;$i< strlen($md5); $i++){
-			$a = ord($md5[$i]);
-			if($a >127)
-				$a = $a -256;
-		$md5Bytes[$i] = $a;	
-		}
-		
-		return $md5Bytes;
-	}
-	public function generateTanWithSeed($seed,$pin,$destination,$amount){
+	function generateTanWithSeed($seed,$pin,$destination,$amount){
 		
 		$plaintext = $seed.$pin.$destination.$amount.$seed;
 		//$hash = $this->generateMD5Hash($plaintext);
-		$hash = hash("sha256",$plaintext);
-		$hash_string="";
-		for($i=0; $i < count($hash); $i++){
-			$hash_string = $hash_string.abs($hash[$i]);
+		$hash = hash('sha256',$plaintext);
+		$hash_array = array();
+		for ($i=0;$i<16;$i += 2) {
+			$tmp = substr($hash, $i,1).substr($hash, $i+1,1);
+			array_push($hash_array, hexdec($tmp));
 		}
-		$tan = substr($hash_string,0,15);
-		return $tan;
-		
+		$hash_string = "";
+		for ($j=0;$j<16;$j++) {
+			$tmp = $hash_array[$j];
+			if ($tmp > 127) {
+				$tmp -= 256;
+			}
+		 	$hash_string .= strval(abs($tmp));
+		}
+		return substr($hash_string,0,15);
 	}
 	
 	public function selectRandomTAN( $accountNumber ) {
