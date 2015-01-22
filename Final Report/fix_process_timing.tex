@@ -1,0 +1,20 @@
+\chapter{Fix Process Timing}
+\section{Affected Files}
+\begin{itemize}
+	\item webroot/pw\_recovery.php: 137++
+\end{itemize}
+\section{Description}
+
+Our App was leaking information by its process timing. To be more precise, the vulnerability was placed in the password recovery service. The User can enter his/her email address and will retrieve an email with an new password. The problem was the time, the system took to send that email. If entering an email which isn't registered in the system, the process takes round about 30 ms instead of 3 seconds. This means that an attacker can guess regitered email addresses my observing the process time. To fix this problem there is more than one solution. You could start an asynchronous task that is sending the mail while the web service reponds to the client. For that you have to use external libraries that would increase the complexity of the system. Another way would be to send a curl request to an internal web service. This basically would work but it requires a static host name to do so. So we decided to chose a third solution. We inserted a sleep command that will wait a randomly picked interval between two and four seconds if the email address is not known to the system. This prevents an attacker of easily guessing registered email adresses.
+
+\begin{lstlisting}[caption=Random Timeout in pw\_recovery.php,label=listing:timeout]
+	if($user->email) {
+	// if we found the mail it is a valid user
+	$user->sendPwRecoveryMail();
+	}
+	else {
+	// timeout , so it's not that easy to guess existing accounts via the processing time.
+	$timeout = rand(2,4);
+	sleep($timeout);
+	}
+\end{lstlisting}
