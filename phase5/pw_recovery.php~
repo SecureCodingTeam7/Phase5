@@ -135,7 +135,6 @@ if( isset($_GET['email']) && isset($_GET['id']) ) {
 		$user->sendPwRecoveryMail();
 	}
 	else {
-		// timeout for 3 seconds, so it's not that easy to guess existing accounts via the processing time.
 		sleep(3);
 	}?>
 	
