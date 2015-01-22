@@ -1,0 +1,61 @@
+\documentclass{report}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{titletoc}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{pink}{rgb}{1,0.07,0.57}
+
+
+\lstset{frame=tb,
+  language=Java,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{blue},
+  keywordstyle=\color{pink},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{blue},
+  breaklines=true,
+  breakatwhitespace=true
+  tabsize=3
+}
+
+\lstset{language=Java}
+
+\title{Secure Coding - Team 7- Phase 5}
+\author{Magnus Jahnen, Thomas Krex, Elias Tatros}
+\date{\today}
+
+
+\begin{document}
+
+\maketitle
+
+\part{Executive Summary}
+
+\tableofcontents
+
+\part{Time Tracking Table}
+\include{time_tracking_table}
+
+
+\part{Application Architecture}
+
+
+\part{Security Measures}
+\include{security_measures}
+
+
+\part{Fixes}
+\include{hsts_fix}
+\include{secure_cookie_fix}
+
+\end{document}
