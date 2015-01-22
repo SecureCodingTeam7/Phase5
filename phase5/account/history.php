@@ -124,15 +124,15 @@ else {
 						$odd = true; 
 					}?>
 			            <td><?php echo ++$count; ?></td>
-						<td><?php if ($transaction['source'] == $account) {
+						<td><?php if ($transaction['source'] == $selectedAccount) {
 							 echo "<p class=\"selectedAccount\">".$transaction['source']."</p>";
 						} else { echo $transaction['source']; } ?></td>
 						<td><?php echo $transaction['source_name'] ?></td>
-						<td><?php if ($transaction['destination'] == $account) {
+						<td><?php if ($transaction['destination'] == $selectedAccount) {
 							 echo "<p class=\"selectedAccount\">".$transaction['destination']."</p>";
 						} else { echo $transaction['destination']; } ?></td>
 					  	<td><?php echo $transaction['destination_name'] ?></td>
-						<td><p class=<?php if($transaction['destination'] == $account) echo "\"income\">"; else echo "\"expense\">"; echo $transaction['amount']."</p>"; ?></td>
+						<td><p class=<?php if($transaction['destination'] == $selectedAccount) echo "\"income\">"; else echo "\"expense\">"; echo $transaction['amount']."</p>"; ?></td>
 						<td><?php if ($transaction['is_approved'] > 0) echo "yes"; else echo "no"; ?></td>
 						<td><?php echo $transaction['description'] ?></td>
 						<td><?php echo $transaction['date_time']; ?></td>

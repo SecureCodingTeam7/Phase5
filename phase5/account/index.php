@@ -125,46 +125,109 @@ else {
 		</div>
 		
 		<div class="main">
-		<div class="accountList">
-		<?php
-		/* Get User Accounts */
-		$userAccounts = $user->getAccounts();
-		foreach ($userAccounts as $account) {
-			?>
-			<form method="post" action="">
-				<input type="hidden" name="CSRFToken" value="<?php echo $_SESSION['CSRFToken']; ?>" />
-				<input type="hidden" name="accountNumber" value="<?php echo $account; ?>" />
-				<input type="submit" name="selectAccount" class="pure-button pure-button-active" value="<?php echo $account; ?>" 
-				<?php if (isset($_SESSION['selectedAccount']) && ( $account == $_SESSION['selectedAccount'])) echo "style=\"width: 170px; background: rgb(223, 117, 20);\"";
-						else { echo "style=\"width: 160px;\""; }
-				?>/>
-			</form>
-			<?php
-		}
-		?>
-		</div>
-
-		<?php if($user->useScs == "1") { ?>
-		<div class="SCSDownload">
-			<form method="post" action="download.php">
-				<li class="buttons">
-					<input type="hidden" name="CSRFToken" value="<?php echo $_SESSION['CSRFToken']; ?>" />
-					<input type="submit" name="downloadSCS" value="Download SCS" class="pure-button pure-button-primary" id="DownloadSCSButton" />
-				</li>
-			</form>
-		</div>
-		<?php }else {} ?>
-		<div class="accountCreation">
-			<form method="post" action="">
-				<li class="buttons">
-					<input type="hidden" name="CSRFToken" value="<?php echo $_SESSION['CSRFToken']; ?>" />
-					<input type="submit" name="createAccount" onclick="setTimeout(disableFunction, 1);" value="Create New Account" class="pure-button pure-button-primary" id="createNewAccountButton" />
-				</li>
-			</form>
-		</div>
 			Welcome, <em><?php echo $_SESSION['user_email']; ?></em>. Below is a list of your accounts. <br /><br />
 			You can <em>click</em> on any of your accounts to <em>select</em> it. The <em>active</em> account is <em><FONT COLOR="orange">marked in orange</FONT></em> and indicated in the <em>top right corner</em>. <br />
 			You can also <em>create a new account</em> by clicking on the <em><FONT COLOR="blue">Create new Account</FONT></em> button.
+
+		<div class="accountList">
+			<?php
+			/* Get User Accounts */
+			$userAccounts = $user->getAccounts();
+			foreach ($userAccounts as $account) {
+				?>
+				<form method="post" action="">
+					<input type="hidden" name="CSRFToken" value="<?php echo $_SESSION['CSRFToken']; ?>" />
+					<input type="hidden" name="accountNumber" value="<?php echo $account; ?>" />
+					<input type="submit" name="selectAccount" class="pure-button pure-button-active" value="<?php echo $account; ?>" 
+					<?php if (isset($_SESSION['selectedAccount']) && ( $account == $_SESSION['selectedAccount'])) echo "style=\"width: 170px; background: rgb(223, 117, 20);\"";
+							else { echo "style=\"width: 160px;\""; }
+					?>/>
+				</form>
+				<?php
+			}
+			?>
+
+
+			<?php if($user->useScs == "1") { ?>
+			<div class="SCSDownload">
+				<form method="post" action="download.php">
+					<li class="buttons">
+						<input type="hidden" name="CSRFToken" value="<?php echo $_SESSION['CSRFToken']; ?>" />
+						<input type="submit" name="downloadSCS" value="Download SCS" class="pure-button pure-button-primary" id="DownloadSCSButton" />
+					</li>
+				</form>
+			</div>
+			<?php }else {} ?>
+			<div class="accountCreation">
+				<form method="post" action="">
+					<li class="buttons">
+						<input type="hidden" name="CSRFToken" value="<?php echo $_SESSION['CSRFToken']; ?>" />
+						<input type="submit" name="createAccount" onclick="setTimeout(disableFunction, 1);" value="Create New Account" class="pure-button pure-button-primary" id="createNewAccountButton" />
+					</li>
+				</form>
+			</div>
+		</div>
+
+		<div class="accountOverview">
+		<p>Below is list of your accounts and transactions.<br />You can view the history of individual accounts by selecting an account and then selecting history.</p>
+		<hr>
+
+		<?php
+		foreach($userAccounts as $account) {
+				$transactions = $user->getTransactions( $account );
+				$odd = true;
+				$count = 0;
+				
+				
+				?>
+				<table class="pure-table">
+				<caption style="caption-side:top"><?php echo "<br />Account #".$account;?></caption>
+					<thead>
+						<tr>
+							<th>#</th>
+							<th>Source</th>
+							<th>Src-Name</th>
+							<th>Destination</th>
+							<th>Dst-Name</th>
+							<th>Amount</th>
+							<th>Valid</th>
+							<th>Description</th>
+							<th>Time</th>
+						</tr>
+					</thead>
+				
+					<tbody>
+				<?php 
+				foreach ($transactions as $transaction) { 
+						if ($odd) {
+							echo "<tr class=\"pure-table-odd\">";
+							$odd = false;
+						} else { 
+							echo "<tr>";
+							$odd = true; 
+						}?>
+							<td><?php echo ++$count; ?></td>
+							<td><?php if ($transaction['source'] == $account) {
+								 echo "<p class=\"selectedAccount\">".$transaction['source']."</p>";
+							} else { echo $transaction['source']; } ?></td>
+							<td><?php echo $transaction['source_name'] ?></td>
+							<td><?php if ($transaction['destination'] == $account) {
+								 echo "<p class=\"selectedAccount\">".$transaction['destination']."</p>";
+							} else { echo $transaction['destination']; } ?></td>
+						  	<td><?php echo $transaction['destination_name'] ?></td>
+							<td><p class=<?php if($transaction['destination'] == $account) echo "\"income\">"; else echo "\"expense\">"; echo $transaction['amount']."</p>"; ?></td>
+							<td><?php if ($transaction['is_approved'] > 0) echo "yes"; else echo "no"; ?></td>
+							<td><?php echo $transaction['description'] ?></td>
+							<td><?php echo $transaction['date_time']; ?></td>
+						</tr>
+				<?php
+				}
+			}
+				?>
+
+			    </tbody>
+			</table>
+			</div>
 		</div>
 	</div>
 	<script>

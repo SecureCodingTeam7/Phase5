@@ -63,7 +63,8 @@ if ( !isset($_SESSION['user_email']) || !isset($_SESSION['user_level']) || !isse
 		
 			$selectedUser = new User();
 			$selectedUser->getUserDataFromID( $_POST['id'] );
-			echo "Details for ".$selectedUser->email;
+			echo "<a href=\"users.php\">back to user list</a>";
+			echo "  <br /><p style=text-indent:1em;>Details for ".$selectedUser->email."</p>";
 			
 			$accounts = $selectedUser->getAccounts();
 			

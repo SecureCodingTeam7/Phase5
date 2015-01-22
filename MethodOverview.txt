@@ -1,0 +1,278 @@
+// GENERAL TODO:
+// Lockout Mechanism vs. TAN/Login brute forcing
+
+// Gets the associated account ID from the accounts table for a certain account number
+getAccountNumberID
+		params: accountNumber
+		dependencies: none
+		returns: AccountID for AccountNumber or -1 if not found
+
+// Gets all transactions associated with a given accountNumber as an array		
+getTransactions
+		params: accountNumber
+		returns: Array of transactions, empty array if not found
+		dependencies: getAccounts
+		transaction array: 
+			$transaction['source_name']
+			$transaction['destination_name']
+			$transaction['id']
+			$transaction['source']
+			$transaction['destination']
+			$transaction['amount']
+			$transaction['description']
+			$transaction['code']
+			$transaction['is_approved']
+			$transaction['date_time']
+			
+// Generates 100 random and unique TANs with a length of 15 digits
+// and inserts them into trans_codes table, associated with the given account ID (account number)
+// It also creates a PDF with all TAN Numbers and sends it via sendMailWithAttachment
+generateTANList
+		params: accountNumber
+		dependencies: getAccountNumberID, randomDigits, sendMailWithAttachment, createPDF
+		returns: true on success, false on error
+		
+// Send an Email with a Message and a Subject
+sendMail (void)
+		params: email, message, subject
+		dependencies: sendMailWithAttachment
+		Facade for sendMailWithAttachment
+
+// Send an Email with a Message, a Subject and an Attachment
+sendMailWithAttachment (void)
+		params: email, message, subject, attachment
+		dependencies: PHPMailer
+		throws: SendEmailException
+		
+// PDF TAN Mode: Checks if the TAN was used, randomly chooses the next TAN (via call to updateNextTan) and calls insertTransaction
+// PDF TAN Mode: If TAN was already used, TransferException is thrown and no changes are made to the system
+// SCS TAN Mode: There is a simple call to insertTransaction
+commitTransaction
+		params: source, destination, amount, code, description
+		dependencies: updateNextTan, insertTransaction
+		returns: true on success, false on failure
+		throws: TransferException
+		
+// Inserts a new transaction entry into the database table 'transactions'.
+// On successful insertion 2 cases exist:
+// 	1. unapproved transaction: it calls updateBalances and updateAvailableFunds for source and destination
+//  2. approved transaction: it calls updateAvailableFunds for source only
+// If an error occurs TransferException is thrown.
+// TODO: Save state before insertion/changes and restore that state when an exception occurs
+insertTransaction
+		params: source, destination, amount, description, code, is_approved
+		dependencies: updateBalances, updateAvailableFunds
+		returns: result of updateAvailableFunds()
+
+// Compares the given TAN with the TAN with index number TANNumber, which is associated with the given accountNumber, in the database table 'trans_codes'
+// If the TANs match we return true, otherwise we return false
+verifyTAN
+		params: accountNumber, TAN, TANNumber
+		dependencies: getAccountNumberID
+		returns: true if TAN is verified, false otherwise
+		
+// Used for SCS TAN verification. Uses a time stamp to generate a TAN via call to generateTANWithSeed
+// For better usability some deviation in the time stamp is allowed, if TAN matches (validation via strcmp)
+// we return true, otherwise false
+verifyGeneratedTAN
+		params: accountNumber, amount, tan
+		dependencies: generateTANWithSeed, strcmp
+		returns: true if tan is valid, false otherwise+
+
+// Generates the MD5 hash of a given input
+generateMD5Hash
+		params: plain
+		dependencies: md5 (PHP)
+		returns: md5 hash of 'plain' as byte array
+		
+// Used by SCS method to Generate TAN using a seed
+// The TAN consists of the first 15 characters of a hash.
+// The Hash is the MD5 of the following concatenation: seed.pin.destination.amount.seed
+// TODO: use SHA-256 instead of MD5
+generateTANWithSeed
+		params: seed, pin, destination, amount
+		dependencies: generateMD5Hash
+		returns: TAN generated via hash
+		
+// Uses rand to select a random TAN index from the available unused TANs associated with a given accountNumber
+selectRandomTAN
+		params: accountNumber
+		dependencies: getAccountNumberID, rand (PHP)
+		returns: the TAN index ('code_number') for the selected TAN. -1 on error or if no tan exists for that account Number.
+
+// Entry point of the transaction process.
+// Validates transaction data supplied by user input for validity and consistency
+// Verifies that source account has sufficient funds available. -> Call to getAvailableFundsForAccount
+// Verifies that current account belongs to the user that requested the transaction
+// Verifies that destination account exists. -> Call to checkAccountExists
+// Case SCS TAN: Verifies that TAN is correct and commits transaction. Calls to: verifyGeneratedTAN, commitTransaction
+// Case PDF TAN: Verifies that TAN is correct and commits transaction. Calls to: getNextTan, verifyTAN, commitTransaction
+// On Error: throws TransferException
+// (description, destination, source, amount, tan)		
+transferCredits
+		params: array (), source. 
+				array must contain the following indexers: 'description', 'destination', 'amount', 'tan'
+		dependencies: TransferException, checkAccountExists, verifyGeneratedTAN, commitTransaction, getNextTan, verifyTAN, getAvailableFundsForAccount
+		returns: true on success, false on error
+		throws: TransferException
+
+// Attempts to register a new user in the system.
+// Validates registration details supplied by user input.
+// Generates random PIN for this user, which is used for SCS TAN or PDF TAN access.
+// If User is not an Employee it also sends an Email with the PIN (for SCS or PDF).
+register
+		params: array ()
+				array must contain the following indexers: 'email', 'username', 'password', 'confirm_password', 'status', 'use_scs'
+		dependencies: isValidEmail, checkUserExists, checkPassword, randomDigits, getUserDataFromEmail, sendMail
+		returns: true on success, false otherwise
+		throws: InvalidInputException
+
+// Obtains the indexer for the currently valid TAN for the supplied account Number
+getNextTAN
+		params: accountNumber
+		dependencies: none
+		returns: the indexer for the currently valid TAN (field 'next_tan' in 'accounts' table), or -1 on error
+
+// Generates the indexer for the next TAN via call to selectRandomTAN and updates the 
+// 'next_tan' field in 'accounts' table for the user with the account number supplied in the call.
+updateNextTan
+		params: accountNumber
+		dependencies: selectRandomTAN, TransferException
+		returns: true on success, false on error
+		throws: TransferException
+		
+// Obtain array of accounts for this user object
+getAccounts
+		params: none
+		dependencies: none
+		returns: array of accounts for this user object, empty array on error
+
+// Obtain array of accounts for user with specified id		
+getAccountsForId
+		params: id
+		dependencies: none
+		returns: array of accounts for the user with id supplied in the call, empty array on error
+
+// Obtain all user data from table 'users' associated with a certain email address
+getUserDataFromEmail
+		params: email
+		dependencies: InvalidInputException, isValidEmail, 
+		returns: array of user data from database
+				 array contains the following indexers: 'email', 'name', 'passwd', 'is_employee', 'is_active', 'id', 'pw_recover_id', 'pin', 'use_scs'
+				 empty array on error
+		throws: InvalidInputException
+
+// Obtain all user data from table 'users' associated with a certain id
+// TODO: duplicated code (see getUserDataFromEmail)
+getUserDataFromID
+		params: id
+		dependencies: none
+		returns: array of user data from database
+				 array contains the following indexers: 'email', 'name', 'passwd', 'is_employee', 'is_active', 'id', 'pw_recover_id', 'pin', 'use_scs'
+				 empty array on error
+
+// Checks a given password and password confirmation for equivalence.
+// Moreover it checks whether password is secure enough (uppercase, lowercase, number and length >= 8)
+checkPassword
+		params: passwd, confirm_password
+		dependencies: none
+		returns: true if passwords are valid/secure and match, false otherwise
+
+// Checks user login input for validity.
+// Compares password supplied for certain email with password stored in database. Only compares hashes.
+checkCredentials
+		params: array ()
+				array contains the following indexers: 'email', 'password'
+		dependencies: crypt
+		returns: true on success, false otherwise
+
+// Obtain an array of all users marked as inactive in database table 'users'
+getInApprovedUsers
+		params: none
+		dependencies: none
+		returns: array of inactive users
+				 array contains the following indexers: 'id', 'email', 'is_employee'
+				 empty array on error
+
+// Obtain an array of transactions that are marked as not approved in table 'transactions'		 
+getInApprovedTransactions
+		params: none
+		dependencies: none
+		returns: array of unapproved transactions.
+				 array contains the following indexers: 'id', 'source', 'destination', 'amount', 'date_time'
+				 empty array on error
+
+// Approve Users with given userIDs and set their balance, also marking them as active.
+// Validate UserID and Balance, create a new user, Send Email informing about approval, add a new account with new account number which is associated with the user
+approveUsers
+		params: array ()
+				array contains the following indexers: 'balance', 'users'
+		dependencies: addAccount, isActiveUser, getUserDataFromId, sendMail, generateNewAccountNumber
+		returns: empty array on error
+		throws: InvalidInputException
+		
+// Approve Transactions with given IDs, setting 'is_approved' in table transactions for each supplied transaction id
+approveTransactions
+		params: transactionIds (array)
+		dependencies: isApprovedTransaction, updateBalances,updateAvailableFunds
+		returns: empty array on error
+		throws: InvalidInputException
+
+
+// TODO: fix inconsistent return types		
+isApprovedTransaction
+		params: transactionID
+		dependencies: none
+		returns: true if 'is_approved' is set for this transaction, false otherwise; empty array on error
+
+// Returns an array of entries for each user in table 'users', excluding employees
+getAllUsers
+		params: none
+		dependencies: none
+		returns: an array of user data for all users in table 'users'
+				 array contains the following indexers: 'id', 'email', 'is_active'
+
+// Return the balance of the account associated with the provided account number				 
+getBalanceForAccount
+		params: accountNumber
+		dependencies: none
+		returns: balance of the account associated with the provided account number, -1 on error
+		
+// Returns the available funds for a given account number
+// TODO: What if result is null?
+getAvailableFundsForAccount
+		params: accountNumber
+		dependencies: none
+		returns: available funds for the provided account, -1 on error
+	
+// Generates a random recovery id associated with this user.
+// Additionally an email is sent to the user, containing a link that uses the recovery id 
+sendPwRecoveryMail (void)
+		params: none
+		dependencies: randomDigits, sendMail
+		returns: void
+		
+// Compares the given recovery id with the one located in the database.
+// If a match is found, a new random password of 8 digits is generated.
+// The pw_recovery_id field for this user is reset to null in the database.
+// The new password is sent to the user via email.
+doPwRecovery
+		params: id
+		dependencies: randomDigits, generateSaltedHash, sendMail
+		returns: true on success, false otherwise
+		
+// Updates balance for both accounts, adding amount to the destination account and subtracting amount from the source account.
+// Amount is validated to be a positive number, accounts are validated for existence 
+updateBalances
+		params: srcAccount, destAccount, amount
+		dependencies: checkAccountExists, getBalanceForAccount, InvalidInputException
+		returns: true on success, false otherwise
+		throws: InvalidInputException
+
+// Adds amount to available funds of given account.
+// Account is checked for existence.		
+updateAvailableFunds
+		params: account, amount
+		dependencies: checkAccountExists, getAvailableFundsForAccount
+		returns: true on success, false on error
+		throws: InvalidInputException

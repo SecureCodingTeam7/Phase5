@@ -143,7 +143,7 @@ class User {
 			
 			createPDF($tmp_pdf,$tans,$this->pin,$accountNumber);
 			
-			$message= "Dear ".$this->name.".\n Your transaction codes for the account ".$accountNumber." can be find in the attached PDF file.\n Please notice, that you will need your Personal Identification Number that you received via mail to open it";
+			$message= "your transaction codes for the account ".$accountNumber." are located in the attached PDF file.\n Please note, that you will need to enter your Personal Identification Number, which you should have received in a different email.";
 
 			try{
 				$this->sendMailWithAttachment($this->email, $message, "TAN Codes", $tmp_pdf);
@@ -183,15 +183,17 @@ class User {
 		$mail->Password = "#team7#beste";
 	
 		$mail->From     = "noreply@mybank.com";
-		$mail->FromName = 'mybank Service';
+		$mail->FromName = 'mybank Customer Service';
 		$mail->AddAddress($email);
 		
 		if($attachment != "") {
 			$mail->AddAttachment($attachment,"transaction_codes");
 		}
 	
+		$userData = $this->getUserDataFromEmail($email);
+		$name = $userData['name'];
 		$mail->Subject  = $subject;
-		$mail->Body     = $message;
+		$mail->Body     = "Dear ".$name.",\n ".$message."\n\n with best regards,\n   your myBank Customer Service";
 		$mail->WordWrap = 200;
 	
 		if(!$mail->Send()) {
@@ -580,8 +582,8 @@ class User {
 				$this->getUserDataFromEmail( $this->email );
 				
 				if(!$this->isEmployee){
-					$message = "Dear ".$this->name.".\nYour registration at mybank was successful. Here is your Personal Identification Number: ".$this->pin."\nYou can use this to open the PDF file with your TAN codes. Alternatively you can use it to generate your TAN codes via our SCS (Smart Card Simulator) tool, depending on what you chose at registration.";
-					$this->sendMail($this->email, $message, "Registration successful");
+					$message = "we are excited to welcome you at myBank. Please note your Personal Identification Number (PIN): ".$this->pin."\n It is important that you keep your PIN confidential. MyBank Employees will never ask you for your PIN via Email.\n\n If you chose the PDF TAN option, the PIN is used to gain access to the PDF file, which includes your transaction numbers.\n\n Alternatively, if you chose the Smart Card option, the PIN is used by our Smart Card Tool, to generate your transaction numbers.\n To download the Smart Card Simulator, please login to your account on our website. The download link can be found on your Account page.";
+					$this->sendMail($this->email, $message, "Welcome to myBank, ".$this->name);
 				}
 				return true;
 			} else {
@@ -946,9 +948,7 @@ class User {
 				$user->getUserDataFromId($userID);
 
 				if(!$user->isEmployee) {
-					if($user->useScs == "1") {
-						$this->sendMail($user->email, "Congratulations, your account was enabled by one of our employees. Have Fun!!","Account Approved");
-					}
+					$this->sendMail($user->email, "we are pleased to inform you, that your account was enabled by one of our employees.","Your Account has been approved");
 					$user->addAccount(generateNewAccountNumber());
 				}
 
@@ -968,7 +968,7 @@ class User {
 				$stmt->bindValue( "available_funds", $newBalance, PDO::PARAM_INT );
 				$stmt->execute();
 				
-				$count++;
+				//$count++;
 			}
 			
 			$connection = null;
@@ -978,24 +978,24 @@ class User {
 		}
 	}
 	
-	public function approveTransactions($tansactionIds) {
+	public function approveTransactions($transactionIds) {
 		if(!$this->isEmployee) return;
 		try {
 			$connection = new PDO( DB_NAME, DB_USER, DB_PASS );
 		
-			foreach($tansactionIds as $tansactionId) {
+			foreach($transactionIds as $transactionId) {
 				
 				if ( !$this->isApprovedTransaction ( $transactionId ) ) {
 					$sql = "UPDATE transactions set is_approved = 1 WHERE id = :id";
 				
 					$stmt = $connection->prepare( $sql );
-					$stmt->bindValue( "id", $tansactionId, PDO::PARAM_INT );
+					$stmt->bindValue( "id", $transactionId, PDO::PARAM_INT );
 					$stmt->execute();
 					
 					$sql = "SELECT source, destination, amount FROM transactions  WHERE id = :id";
 				
 					$stmt = $connection->prepare( $sql );
-					$stmt->bindValue( "id", $tansactionId, PDO::PARAM_INT );
+					$stmt->bindValue( "id", $transactionId, PDO::PARAM_INT );
 					$stmt->execute();
 					
 					$results = $stmt->fetch();
@@ -1047,7 +1047,7 @@ class User {
 		$result = array ();
 		try{
 			$connection = new PDO( DB_NAME, DB_USER, DB_PASS );
-			$sql = "SELECT id, email,  BIN(`is_active` + 0) AS `is_active` FROM users WHERE is_employee = 0";
+			$sql = "SELECT id, email,  BIN(`is_active` + 0) AS `is_active` FROM users WHERE is_employee = 0 ORDER BY email";
 		
 			$stmt = $connection->prepare( $sql );
 			$stmt->execute();
@@ -1115,10 +1115,10 @@ class User {
 			
 			// Send the mail
 			
-			$message= "Dear ".$this->name.".\n You requested a new password. Please click on this link to get a new password via email: <ip>/pw_recovery?email=$this->email&id=$pwRecoverId";
+			$message= "we have received a password reset request for your account. Please click on this link, if you wish to receive your new password via email: <ip>/pw_recovery?email=$this->email&id=$pwRecoverId";
 				
 			
-			$this->sendMail($this->email, $message, "Password Recovery");
+			$this->sendMail($this->email, $message, "Your Password Recovery Request");
 			
 		} catch ( PDOException $e ) {
 			echo "<br />Connect Error: ". $e->getMessage();
@@ -1145,9 +1145,9 @@ class User {
 			
 				// Send the mail
 			
-				$message= "Dear ".$this->name.".\n Your new Password is: $newPassword";
+				$message= "your new Password is: $newPassword";
 				
-				$this->sendMail($this->email, $message, "Password Recovery");
+				$this->sendMail($this->email, $message, "Your new Password");
 				
 				return true;
 			
