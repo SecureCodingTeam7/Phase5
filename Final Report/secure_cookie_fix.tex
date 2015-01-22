@@ -1,0 +1,21 @@
+\chapter{Fix for Bypassing Session Management Schema and Cookies attributes}
+\section{Affected Files}
+
+\begin{itemize}
+\item /etc/apache2/httpd.conf lines: 2++
+\end{itemize}
+
+\section{description}
+In order to protect the session cookie and its attributes against attackers the added the following settings to httpd.conf:
+
+\begin{lstlisting}
+	    php_value session.cookie_httponly true
+	    php_value session.cookie_secure true
+	    php_value session.cookie_lifetime 1800
+\end{lstlisting}
+
+The httponly flag was already set in phase 3 and prevents that the cookie can be acessed by javascript.
+The http_secure flag ensures that cookies are only sent via HTTPS. \newline
+Futhermore the attribute cookie_lifetime defines the expire data for a cookie. A short lifetime decreases the chances for an attacker to sucessfully use a foreign session cookie to authenticate with the web service.
+
+
