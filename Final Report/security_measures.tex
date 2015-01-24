@@ -1,7 +1,15 @@
 \chapter{Security Measures}
 
-\section{PDF Password Protecion}
+\section{PDF Password Protection}
+The TAN List of our customers are password protected. That ensures that only customer himself can access the transaction codes To porotect the pdfs we used thethird party library FDPI.
 \section{HTTPS}
+Our webservice uses the HTTPS protocoll to encrypt all transmitted data to and from our clients.
+This prevents attackers from reading sensitive data via man-in-the-middle attacks.
 \section{Strong password policy}
+We enforce the user to choose a string password to minimize the possible threat based on brute force attacks.
 \section{Secure Session Management}
-\section{title}
+The session cookie of an user is only transmitted via HTTP, can not be accessed via javascript and expires after 30 minutes. So attackers cannot bypassing the authentication schema by stealing cookies of logged in users.
+\section{Prepared Statements for SQL database}
+We protected our web service against sql injections by using prepared statements for database requests.
+\section{CSRF Token}
+
