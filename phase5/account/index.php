@@ -1,14 +1,23 @@
 <?php
+session_start();
 ini_set( 'session.cookie_httponly', 1 );
 include_once(__DIR__."/../class/c_user.php");
 include_once(__DIR__."/../include/helper.php");
+include_once(__DIR__."/../include/InvalidSessionException.php");
+include_once(__DIR__."/../header.php");
+
 $loginPage = "../login.php";
 $loginRedirectHeader = "Location: ".$loginPage;
-session_start();
 
-/* Generate Form Token (valid for this session) */
-if (!isset($_SESSION['CSRFToken'])) {
-	$_SESSION['CSRFToken'] = generateFormToken();
+try {
+	validateUserSession(false);
+	$session_valid = true;
+} catch (InvalidSessionException $ex) { 
+	/* DEBUG */
+	echo $ex->getMessage();
+	$session_valid = false;
+	//header("Location:../logout.php");
+	die();
 }
 
 /* DEBUG 
@@ -19,34 +28,29 @@ if (isset($_POST['CSRFToken'])) {
 	echo $_POST['CSRFToken'];
 }*/
 
-if ( !isset($_SESSION['user_email']) || !isset($_SESSION['user_level']) || !isset($_SESSION['user_login']) ) {
-    echo "Session Invalid. <a href='$loginPage'>Click here</a> to sign in.";
-    
-    /* No Session -> Redirect to Login */
-    //header($loginRedirectHeader);
-} else if ( $_SESSION['user_email'] == "" || $_SESSION['user_level'] == "" || $_SESSION['user_login'] == "") {
-	echo "Empty Session Data. <a href='$loginPage'>Click here</a> to sign in.";
+if ($session_valid) {
 	
-	/* Destroy Session */
-	$_SESSION = array();
-	session_destroy();
-	
-	/* Session Data Invalid -> Redirect to Login */
-	//header($loginRedirectHeader);
-}  else if($_SESSION['user_level']){
-		header("Location: ../login.php");
-		die();
-	}
-
-else {
 	/* Session Valid */
 	$user = new User();
 	$user->getUserDataFromEmail( $_SESSION['user_email'] );
-	$selectedAccount = "none";
+	$userAccounts = $user->getAccounts();
 	
-	/* Selected Account Detected */
+	/* Generate Form Token (valid for this session) */
+	if (!isset($_SESSION['CSRFToken'])) {
+		$_SESSION['CSRFToken'] = generateFormToken();
+	}
+	
+	/* Determine Selected Account */
 	if ( isset( $_SESSION['selectedAccount'] )) {
 		$selectedAccount = $_SESSION['selectedAccount'];
+	} else {
+		if ( !empty( $userAccounts ) ) {
+			$selectedAccount = $userAccounts[0];
+			$_SESSION['selectedAccount'] = $selectedAccount;
+		}
+		else {
+			$selectedAccount = "none";
+		}
 	}
 	
 	/* Create New Account Detected */
@@ -93,7 +97,7 @@ else {
 <!doctype html>
 <html>
 <head>
-	<title>MyBank: Account Overview</title>
+	<title>Account Dashboard | myBank</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<script src="../include/jquery-2.1.3.min.js"></script>
 	<link href="../style/bootstrap.css" rel="stylesheet" />
@@ -103,64 +107,9 @@ else {
 	<link href="../style/style.css" type="text/css" rel="stylesheet" />
 </head>
 <body>
-	<div class="content">
-		<!--
-			<div class="top_block header">
-				<div class="content">
-					<div class="navigation">
-						Account
-						<a href="transfer.php">Transfer</a>
-						<a href="history.php">History</a>
-					</div>
-					
-					<div class="balance"><?php if ($selectedAccount > 0) { echo "Account Balance: ".$user->getBalanceForAccount( $selectedAccount );}?></div>
-					<div class="availableFunds"><?php if ($selectedAccount > 0) { echo "Available Funds: ".$user->getAvailableFundsForAccount( $selectedAccount );}?></div>
-					<div class="userpanel">
-						<?php echo $_SESSION['user_email'] ?>
-						<a href="../logout.php">Logout</a><br />
-						<?php 
-						if ($selectedAccount > 0) {
-						echo "Account: ".$_SESSION['selectedAccount'];
-						} else {
-						echo "Account: none";
-						}
-						?>
-					</div>
-				</div>
-			</div>
-		-->
-		<div id="header">
-		</div>
-		<div id="top-block">
-			<div id="top-block-main">
-				<div id="logo"></div> <!-- logo -->
-				<div id="navbar">
-					<ul class="nav nav-tabs">
-					  <li class="active">
-						<a href="#">Dashboard</a>
-					  </li>
-					  <li><a href="#">Transfer</a></li>
-					  <li><a href="#">History</a></li>
-					  <li class="dropdown">
-					  <a class="dropdown-toggle"
-						 data-toggle="dropdown"
-						 href="#">
-						  Account
-						  <b class="caret"></b>
-					  </a>
-						<ul class="dropdown-menu">
-						  <li><a href="details.php">View Details</a></li>
-						  <li><a href="../logout.php">Help</a></li>
-						  <li class="divider"></li>
-						  <li><a href="../logout.php">Log out</a></li>
-						</ul>
-					  </li>
-					</ul>
-
-
-				</div> <!-- navbar -->
-			</div> <!-- top-block-main -->
-		</div> <!-- top-block  -->
+	<div id="content">
+	
+		<?php render_user_header($selectedAccount, $user, "Dashboard"); ?>
 		
 		<div id="main">
 
@@ -174,14 +123,13 @@ else {
 				<div>
 				<?php
 				/* Get User Accounts */
-				$userAccounts = $user->getAccounts();
 				foreach ($userAccounts as $account) {
 					?>
 					<form method="post" action="">
 						<input type="hidden" name="CSRFToken" value="<?php echo $_SESSION['CSRFToken']; ?>" />
 						<input type="hidden" name="accountNumber" value="<?php echo $account; ?>" />
 						<input type="submit" name="selectAccount" class="pure-button pure-button-active" value="<?php echo $account; ?>" 
-						<?php if (isset($_SESSION['selectedAccount']) && ( $account == $_SESSION['selectedAccount'])) echo "style=\"width: 170px; background: rgb(223, 117, 20);\"";
+						<?php if ( isset( $selectedAccount ) && ( $account == $selectedAccount ) ) echo "style=\"width: 170px; background: rgb(223, 117, 20);\"";
 								else { echo "style=\"width: 160px;\""; }
 						?>/>
 					</form>
@@ -211,7 +159,7 @@ else {
 			</div> <!-- Account List -->
 
 		<div class="accountOverview">
-			<p>Below is list of your accounts and transactions.<br />You can view the history of individual accounts by selecting an account and then selecting history.</p>
+			<p>Below is list of your accounts and transactions.<br />You can view the history of individual accounts by selecting an account above and then selecting Account -> History in the navigation panel.</p>
 			<hr>
 
 			<?php
@@ -272,7 +220,7 @@ else {
 			</div> <!-- Account Overview -->
 		</div> <!-- main -->
 		
-		<div id="footer">Test</div>
+		
 	</div> <!-- content -->
 	<script>
 		function disableFunction() {

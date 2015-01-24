@@ -712,7 +712,7 @@ class User {
 		$result = array ();
 		
 		if (!isValidEmail( $email )) {
-			throw new InvalidInputException("Email address invalid. Please check the Email address.");
+			throw new InvalidInputException("Email address (".$email.") invalid. Please check the Email address.");
 		}
 		
 		try{
@@ -836,15 +836,13 @@ class User {
 			$stmt->execute();
 				
 			$result = $stmt->fetch();
-			if( $result ) {
-				if($result['is_active'] == 0){
-					$connection = null;
-					throw new IsActiveException();
-				}
-				
-				
+			if( $result ) {				
 				 if( crypt($this->password,$result['passwd']) === $result['passwd']){
-				    $success = true;
+					if($result['is_active'] == 0){
+						$connection = null;
+						throw new IsActiveException();
+					}
+					$success = true;
 				}
 				
 			}
