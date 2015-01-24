@@ -844,22 +844,9 @@ class User {
 				
 				 if( crypt($this->password,$result['passwd']) === $result['passwd']){
 				    $success = true;
-				    $sql = "update users set lock_counter = 0 where email = :email";
-					$stmt = $connection->prepare( $sql );
-					$stmt->bindValue( "email", $this->email, PDO::PARAM_STR );
-					$stmt->execute();
+				    $this->resetLockCounter();
 				} else {
-					if ($result['lock_counter'] < 3) {
-						$sql = "update users set lock_counter = lock_counter + 1 where email = :email";
-						$stmt = $connection->prepare( $sql );
-						$stmt->bindValue( "email", $this->email, PDO::PARAM_STR );
-						$stmt->execute();
-					} else {
-						$sql = "update users set is_active = 0 where email = :email";
-						$stmt = $connection->prepare( $sql );
-						$stmt->bindValue( "email", $this->email, PDO::PARAM_STR );
-						$stmt->execute();
-					}
+				    $this->incrementLockCounter();
 				}
 				
 			}
@@ -870,6 +857,40 @@ class User {
 			echo "<br />Connect Error: ". $e->getMessage();
 			return $success;
 		}
+	}
+	
+	function incrementLockCounter() {
+		
+		$connection = new PDO( DB_NAME, DB_USER, DB_PASS );
+		$sql = "SELECT lock_counter FROM users WHERE email = :email LIMIT 1";
+			
+		$stmt = $connection->prepare( $sql );
+		$stmt->bindValue( "email", $this->email, PDO::PARAM_STR );
+		$stmt->execute();
+			
+		$result = $stmt->fetch();
+		
+		if ($result['lock_counter'] < 3) {
+			$sql = "update users set lock_counter = lock_counter + 1 where email = :email";
+			$stmt = $connection->prepare( $sql );
+			$stmt->bindValue( "email", $this->email, PDO::PARAM_STR );
+			$stmt->execute();
+		} else {
+			$sql = "update users set is_active = 0 where email = :email";
+			$stmt = $connection->prepare( $sql );
+			$stmt->bindValue( "email", $this->email, PDO::PARAM_STR );
+			$stmt->execute();
+		}
+		$connection = null;
+	}
+	
+	function resetLockCounter() {
+		$connection = new PDO( DB_NAME, DB_USER, DB_PASS );
+		$sql = "update users set lock_counter = 0 where email = :email";
+		$stmt = $connection->prepare( $sql );
+		$stmt->bindValue( "email", $this->email, PDO::PARAM_STR );
+		$stmt->execute();
+		$connection = null;
 	}
 	
 	public function getInApprovedUsers() {
