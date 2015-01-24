@@ -7,6 +7,7 @@ include_once(__DIR__.'/../include/InvalidInputException.php');
 include_once(__DIR__.'/../include/IsActiveException.php');
 include_once(__DIR__.'/../include/SendEmailException.php');
 include_once(__DIR__.'/../include/TimeServerException.php');
+include_once(__DIR__.'/../include/TooManyInvalidTansException.php');
 include_once(__DIR__.'/../include/phpmailer/class.smtp.php');
 include_once(__DIR__.'/../include/fpdf/fpdf.php');
 include_once(__DIR__.'/../include/fpdi/FPDI_Protection.php');
@@ -449,7 +450,12 @@ class User {
 					} else {
 						if($this->useScs == "1") {
 							if($this->verifyGeneratedTAN($destination, $amount, $tan)) {
+								$this->resetLockCounter();
 								return $this->commitTransaction($source, $destination, $amount, $tan, $description);
+							} else {
+								if($this->incrementLockCounter()) {
+									throw new TooManyInvalidTansException();
+								}
 							}
 						}	
 						
@@ -458,8 +464,12 @@ class User {
 							throw new TransferException("Unable to obtain TAN number.");
 						
 						if ( $this->verifyTAN( $source, $tan, $currentTANNumber ) ) {
+							$this->resetLockCounter();
 							return $this->commitTransaction($source, $destination, $amount, $tan, $description);
 						} else {
+							if($this->incrementLockCounter()) {
+								throw new TooManyInvalidTansException();
+							}
 							throw new TransferException("Invalid TAN.");
 						}
 					}
@@ -846,7 +856,9 @@ class User {
 				    $success = true;
 				    $this->resetLockCounter();
 				} else {
-				    $this->incrementLockCounter();
+				    if($this->incrementLockCounter()) {
+						throw new Exception("You entered invalid information multiple times, hence your account gets inapproved again. Please contact one of our admins for help.");
+					}
 				}
 				
 			}
@@ -870,16 +882,20 @@ class User {
 			
 		$result = $stmt->fetch();
 		
-		if ($result['lock_counter'] < 3) {
+		if ($result['lock_counter'] < 5) {
 			$sql = "update users set lock_counter = lock_counter + 1 where email = :email";
 			$stmt = $connection->prepare( $sql );
 			$stmt->bindValue( "email", $this->email, PDO::PARAM_STR );
 			$stmt->execute();
+			
+			return false;
 		} else {
-			$sql = "update users set is_active = 0 where email = :email";
+			$sql = "update users set is_active = 0, lock_counter = 0 where email = :email";
 			$stmt = $connection->prepare( $sql );
 			$stmt->bindValue( "email", $this->email, PDO::PARAM_STR );
 			$stmt->execute();
+			
+			return true;
 		}
 		$connection = null;
 	}
@@ -978,7 +994,7 @@ class User {
 				$user->getUserDataFromId($userID);
 
 				if(!$user->isEmployee) {
-					$this->sendMail($user->email, "we are pleased to inform you, that your account was enabled by one of our employees.","Your Account has been approved");
+					$this->sendMail($user->email, "We are pleased to inform you, that your account was enabled by one of our employees.","Your Account has been approved");
 					$user->addAccount(generateNewAccountNumber());
 				}
 

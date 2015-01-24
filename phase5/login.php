@@ -124,7 +124,9 @@ if( !(isset( $_POST['checkLogin'] ) ) ) { ?>
 			}
 		} catch(IsActiveException $e) {
 			echo "<br />Your account was not approved yet, please wait until someone does!";
-		} 
+		} catch(Exception $e) {
+			echo "<br />".$e->getMessage();
+		}
 	} else {
 		echo "Invalid Token. Please <a href='login.php'>Try again</a>.";
 	}

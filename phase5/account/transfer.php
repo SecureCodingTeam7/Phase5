@@ -64,9 +64,11 @@ else {
 							$transferSuccess = -1;
 							$transferMessage = "Transfer Failed.";
 						}
+					} catch (TooManyInvalidTansException $e) {
+						$_SESSION['error'] = $e->errorMessage();
 					} catch (Exception $e) {
 						$transferMessage = $e->errorMessage();
-					}
+					} 
 				} else {
 					$_SESSION['error'] =  "CSRF Token invalid.";
 				}
