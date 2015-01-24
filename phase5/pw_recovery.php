@@ -17,15 +17,26 @@ if ( !isset($_SESSION['user_email']) || !isset($_SESSION['user_level']) || !isse
 	die();
 }
 
-
 if( isset($_GET['email']) && isset($_GET['id']) ) {
+	
 	
 	$user = new User();
 	$user->getUserDataFromEmail($_GET['email']);
+	
+	
+	if( isset($_POST['password'])) {
+		if($user->doPwRecovery($_GET['id'], $_POST))
+			echo "Success, your password was set to the newly entered one!";
+		else
+			echo "Something went wrong, please try again later!";
+			
+		die();
+	}
+	
 	$success = false;
 	if($user->email) {
 		// if we found the mail it is a valid user
-		$success = $user->doPwRecovery($_GET['id']);
+		$success = $user->checkPwRecoveryId($_GET['id']);
 	}?>
 	
 	<!doctype html>
@@ -54,7 +65,39 @@ if( isset($_GET['email']) && isset($_GET['id']) ) {
 		<p>
 			<?php 
 			if($success) {
-				echo "Your new password has been sent to you via email!";
+			?>
+			<form method="post" action="" class="pure-form pure-form-aligned">
+		    <fieldset>
+				<div class="pure-control-group">
+				<label for="sec_q_number">Security Question:</label>
+		        <label name="sec_q_number" id="sec_q_number"><?php echo $SECURITY_QUESTIONS[$user->securityQuestionNumber] ?></label>
+		        </div> 
+		        
+		        
+		        <div class="pure-control-group">
+		            <label for="sec_q_answer">Answer</label>
+		            <input name="sec_q_answer" id="sec_q_answer" type="text" placeholder="Answer" required>
+		        </div>
+		        
+		        <div class="pure-control-group">
+		            <label for="password">New Password</label>
+		            <input name="password" id="password" type="password" placeholder="***********" onkeyup="check_pw()" required>
+		            <b id=password_info></b>
+		        </div>
+		        
+		        <div class="pure-control-group">
+		            <label for="confirm_password">Confirm Password</label>
+		            <input name="confirm_password" id="confirm_password" type="password" placeholder="***********" onkeyup="check_pw()" required>
+		            <b id=confirm_password_info></b>
+		        </div>
+		        
+		        <div class="pure-controls">
+		            <button id="SendButton" type="submit" name="recoverPassword" class="pure-button pure-button-primary" onclick="setTimeout(disableFunction, 1);">Submit</button>
+		        </div>
+		        
+		    </fieldset>
+			</form>
+			<?php 
 			} else {
 				echo "Something went wrong, please try again later!";
 			}?>
@@ -108,11 +151,6 @@ if( isset($_GET['email']) && isset($_GET['id']) ) {
 			</form>
 			
 			
-	<script>
-		function disableFunction() {
-		    document.getElementById("SignInButton").disabled = 'true';
-		}
-	</script>
 
 
 	    
@@ -172,3 +210,42 @@ if( isset($_GET['email']) && isset($_GET['id']) ) {
 <?php 
 }
 ?>
+
+	<script>
+		function disableFunction() {
+		    document.getElementById("SignInButton").disabled = 'true';
+		}
+		
+		var pw_info = document.getElementById("password_info")
+	var confirm_pw_info = document.getElementById("confirm_password_info")
+	
+	var pw_field = document.getElementById("password")
+	var confirm_pw_field = document.getElementById("confirm_password")
+	
+	var submit_button = document.getElementById("SendButton")
+	submit_button.disabled = true
+	
+	function check_pw() {
+		// lets check if the pw is strong enough
+		var pw = pw_field.value
+		var lowercase = pw.search("[A-Z]")
+		var uppercase = pw.search("[a-z]")
+		var number = pw.search("[0-9]")
+		
+		if(pw.length < 8 || lowercase == -1 || uppercase == -1 || number == -1) {
+			pw_info.textContent = "Password must have at least eight characters, one upper case, one lower case letter and one number"
+			submit_button.disabled = true
+		} else {
+			pw_info.textContent = ""
+		}
+	
+		if(confirm_pw_field.value != pw_field.value) {
+			confirm_pw_info.textContent = "The two passwords do not match!"
+			submit_button.disabled = true
+		} else {
+			confirm_pw_info.textContent = ""
+			submit_button.disabled = false
+		}
+	}
+
+	</script>

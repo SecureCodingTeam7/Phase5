@@ -23,6 +23,8 @@ class User {
 	public $pin = null;
 	public $useScs = null;
 	public $DEBUG = false;
+	public $securityQuestionNumber = null;
+	public $securityQuestionAnswer = null;
 	
 	public function getAccountNumberID( $accountNumber ) {
 		try {
@@ -742,7 +744,7 @@ class User {
 		
 		try{
 			$connection = new PDO( DB_NAME, DB_USER, DB_PASS );
-			$sql = "SELECT id, name, use_scs, email, passwd, pin, BIN(`is_employee` + 0) AS `is_employee`, BIN(`is_active` + 0) AS `is_active`, pw_recover_id FROM users WHERE email = :email LIMIT 1";
+			$sql = "SELECT id, name, use_scs, email, passwd, pin, BIN(`is_employee` + 0) AS `is_employee`, BIN(`is_active` + 0) AS `is_active`, pw_recover_id, security_question_number, security_question_answer FROM users WHERE email = :email LIMIT 1";
 		
 			$stmt = $connection->prepare( $sql );
 			$stmt->bindValue( "email", $email, PDO::PARAM_STR );
@@ -759,6 +761,8 @@ class User {
 			$this->pwRecoverId = $result['pw_recover_id'];
 			$this->pin = $result['pin'];
 			$this->useScs = $result['use_scs'];
+			$this->securityQuestionNumber = $result['security_question_number'];
+			$this->securityQuestionAnswer = $result['security_question_answer'];
 			
 			if ($this->DEBUG) {
 				echo "<br />===================================================<br />";
@@ -784,7 +788,7 @@ class User {
 		$result = array ();
 		try{
 			$connection = new PDO( DB_NAME, DB_USER, DB_PASS );
-			$sql = "SELECT id, name, email, passwd, use_scs, pin, BIN(`is_employee` + 0) AS `is_employee`, BIN(`is_active` + 0) AS `is_active`, pw_recover_id FROM users WHERE id = :id LIMIT 1";
+			$sql = "SELECT id, name, email, passwd, use_scs, pin, BIN(`is_employee` + 0) AS `is_employee`, BIN(`is_active` + 0) AS `is_active`, pw_recover_id, security_question_number, security_question_answer FROM users WHERE id = :id LIMIT 1";
 	
 			$stmt = $connection->prepare( $sql );
 			$stmt->bindValue( "id", $id, PDO::PARAM_STR );
@@ -801,6 +805,8 @@ class User {
 			$this->pin = $result['pin'];
 			$this->pwRecoverId = $result['pw_recover_id'];
 			$this->useScs = $result['use_scs'];
+			$this->securityQuestionNumber = $result['security_question_number'];
+			$this->securityQuestionAnswer = $result['security_question_answer'];
 			
 			if ($this->DEBUG) {
 				echo "<br />===================================================<br />";
@@ -1176,7 +1182,7 @@ class User {
 			
 			// Send the mail
 			
-			$message= "we have received a password reset request for your account. Please click on this link, if you wish to receive your new password via email: <ip>/pw_recovery?email=$this->email&id=$pwRecoverId";
+			$message= "We have received a password reset request for your account. Please click on this link, if you wish to receive your new password via email: <ip>/pw_recovery.php?email=$this->email&id=$pwRecoverId";
 				
 			
 			$this->sendMail($this->email, $message, "Your Password Recovery Request");
@@ -1186,41 +1192,38 @@ class User {
 		}
 	}
 	
-	public function doPwRecovery($id) {
+	public function checkPwRecoveryId($id) {
 		
 		if(!is_numeric($id))
 			return false;
-		if(strcmp($this->pwRecoverId, $id) == 0) {
-			$newPassword = randomDigits(8);
 			
-			try {
-				$connection = new PDO( DB_NAME, DB_USER, DB_PASS );
-				$sql = "UPDATE users set passwd = :password, pw_recover_id='NULL' WHERE id = :id";
-		
-				$stmt = $connection->prepare( $sql );
-				$stmt->bindValue( "password", generateSaltedHash($newPassword), PDO::PARAM_STR );
-				$stmt->bindValue( "id", $this->id, PDO::PARAM_STR );
-				$stmt->execute();
-		
-				$connection = null;
+		return strcmp($this->pwRecoverId, $id) == 0;
+	}
+	
+	public function doPwRecovery($id, $postArray) {
+		if(!$this->checkPwRecoveryId($id)) 
+			return false;
 			
-				// Send the mail
-			
-				$message= "your new Password is: $newPassword";
-				
-				$this->sendMail($this->email, $message, "Your new Password");
-				
-				return true;
-			
-			} catch ( PDOException $e ) {
-				echo "<br />Connect Error: ". $e->getMessage();
-				return false;
-			}
-			
-		} else {
+		if(strcmp($this->securityQuestionAnswer, $postArray['sec_q_answer']) != 0) {
 			return false;
 		}
 		
+		try {
+			$connection = new PDO( DB_NAME, DB_USER, DB_PASS );
+			$connection->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
+			
+			$sql = "update users set passwd = :password, pw_recover_id = NULL where id = :id";
+			
+			$stmt = $connection->prepare( $sql );
+			$stmt->bindValue( "password", generateSaltedHash($postArray['password']), PDO::PARAM_STR );
+			$stmt->bindValue( "id", $this->id, PDO::PARAM_STR );
+			$stmt->execute();
+			
+			return true;
+		} catch ( PDOException $e ) {
+			echo "<br />Connect Error: ". $e->getMessage();
+			return false;
+		}
 	}
 	
 	function updateBalances($srcAccount, $destAccount, $amount) {
