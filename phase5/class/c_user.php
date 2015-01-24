@@ -7,11 +7,11 @@ include_once(__DIR__.'/../include/InvalidInputException.php');
 include_once(__DIR__.'/../include/IsActiveException.php');
 include_once(__DIR__.'/../include/SendEmailException.php');
 include_once(__DIR__.'/../include/TimeServerException.php');
-include_once(__DIR__.'/../include/TooManyInvalidTansException.php');
 include_once(__DIR__.'/../include/phpmailer/class.smtp.php');
 include_once(__DIR__.'/../include/fpdf/fpdf.php');
 include_once(__DIR__.'/../include/fpdi/FPDI_Protection.php');
 require(__DIR__.'/../include/phpmailer/class.phpmailer.php');
+include_once(__DIR__.'/../include/TooManyInvalidTansException.php');
 
 class User {
 	public $email = null;
@@ -22,9 +22,9 @@ class User {
 	public $isActive = null;
 	public $pin = null;
 	public $useScs = null;
-	public $DEBUG = false;
 	public $securityQuestionNumber = null;
 	public $securityQuestionAnswer = null;
+	public $DEBUG = false;
 	
 	public function getAccountNumberID( $accountNumber ) {
 		try {
@@ -452,12 +452,12 @@ class User {
 					} else {
 						if($this->useScs == "1") {
 							if($this->verifyGeneratedTAN($destination, $amount, $tan)) {
-								$this->resetLockCounter();
+								$this->resetLockCounter(); // Reset the lock out counter
 								return $this->commitTransaction($source, $destination, $amount, $tan, $description);
-							} else {
-								if($this->incrementLockCounter()) {
-									throw new TooManyInvalidTansException();
-								}
+							}
+						} else { // if TAN was wrong, call increment lock counter
+							if($this->incrementLockCounter()) {
+								throw new TooManyInvalidTansException();
 							}
 						}	
 						
@@ -466,12 +466,13 @@ class User {
 							throw new TransferException("Unable to obtain TAN number.");
 						
 						if ( $this->verifyTAN( $source, $tan, $currentTANNumber ) ) {
-							$this->resetLockCounter();
+							$this->resetLockCounter(); // Reset lock counter on valid tan entry
 							return $this->commitTransaction($source, $destination, $amount, $tan, $description);
-						} else {
-							if($this->incrementLockCounter()) {
+						} else { // invalid tan
+							if($this->incrementLockCounter()) { // increment lock counter
 								throw new TooManyInvalidTansException();
 							}
+							
 							throw new TransferException("Invalid TAN.");
 						}
 					}
@@ -555,7 +556,7 @@ class User {
 		} else {
 			throw new InvalidInputException("Security Question not specified.");
 		}
-		
+
 		if( isset( $data['sec_q_answer'] ) ) {
 			$this->securityQuestionAnswer = stripslashes( strip_tags( $data['sec_q_answer'] ) );
 		} else {
@@ -591,10 +592,8 @@ class User {
 			$stmt->bindValue( "isActive", false, PDO::PARAM_STR );
 			$stmt->bindValue( "pin", $pin, PDO::PARAM_STR );
 			$stmt->bindValue( "use_scs", $this->useScs, PDO::PARAM_STR );
-			$stmt->bindValue( "use_scs", $this->useScs, PDO::PARAM_STR );
 			$stmt->bindValue( "security_question_number", $this->securityQuestionNumber, PDO::PARAM_STR );
 			$stmt->bindValue( "security_question_answer", $this->securityQuestionAnswer, PDO::PARAM_STR );
-			
 			$stmt->execute();
 				
 			$connection = null;
@@ -739,7 +738,7 @@ class User {
 		$result = array ();
 		
 		if (!isValidEmail( $email )) {
-			throw new InvalidInputException("Email address invalid. Please check the Email address.");
+			throw new InvalidInputException("Email address (".$email.") invalid. Please check the Email address.");
 		}
 		
 		try{
@@ -867,18 +866,22 @@ class User {
 			$stmt->execute();
 				
 			$result = $stmt->fetch();
-			if( $result ) {
-				if($result['is_active'] == 0){
-					$connection = null;
-					throw new IsActiveException();
-				}
-				
+			if( $result ) {				
 				 if( crypt($this->password,$result['passwd']) === $result['passwd']){
-				    $success = true;
-				    $this->resetLockCounter();
-				} else {
-				    if($this->incrementLockCounter()) {
-						throw new Exception("You entered invalid information multiple times, hence your account gets inapproved again. Please contact one of our admins for help.");
+					if($result['is_active'] == 0){
+						$connection = null;
+						throw new IsActiveException();
+					}
+					
+					/* On successful login, reset the lock counter */
+					$this->resetLockCounter();
+					
+					$success = true;
+				} 
+				
+				else { // Password incorrect, increase lock out counter, if counter >= 3 deactivate account.
+					if($this->incrementLockCounter()) {
+						throw new Exception("You entered invalid information multiple times, hence your account was disabled for your own security. Please contact our customer service for help.");
 					}
 				}
 				
@@ -893,34 +896,33 @@ class User {
 	}
 	
 	function incrementLockCounter() {
-		
+
 		$connection = new PDO( DB_NAME, DB_USER, DB_PASS );
 		$sql = "SELECT lock_counter FROM users WHERE email = :email LIMIT 1";
-			
+
 		$stmt = $connection->prepare( $sql );
 		$stmt->bindValue( "email", $this->email, PDO::PARAM_STR );
 		$stmt->execute();
-			
+
 		$result = $stmt->fetch();
-		
+
 		if ($result['lock_counter'] < 5) {
 			$sql = "update users set lock_counter = lock_counter + 1 where email = :email";
 			$stmt = $connection->prepare( $sql );
 			$stmt->bindValue( "email", $this->email, PDO::PARAM_STR );
 			$stmt->execute();
-			
 			return false;
 		} else {
 			$sql = "update users set is_active = 0, lock_counter = 0 where email = :email";
 			$stmt = $connection->prepare( $sql );
 			$stmt->bindValue( "email", $this->email, PDO::PARAM_STR );
 			$stmt->execute();
-			
 			return true;
 		}
+		
 		$connection = null;
 	}
-	
+
 	function resetLockCounter() {
 		$connection = new PDO( DB_NAME, DB_USER, DB_PASS );
 		$sql = "update users set lock_counter = 0 where email = :email";
@@ -1015,7 +1017,7 @@ class User {
 				$user->getUserDataFromId($userID);
 
 				if(!$user->isEmployee) {
-					$this->sendMail($user->email, "We are pleased to inform you, that your account was enabled by one of our employees.","Your Account has been approved");
+					$this->sendMail($user->email, "we are pleased to inform you, that your account was enabled by one of our employees.","Your Account has been approved");
 					$user->addAccount(generateNewAccountNumber());
 				}
 
@@ -1192,18 +1194,22 @@ class User {
 		}
 	}
 	
+	
 	public function checkPwRecoveryId($id) {
 		
-		if(!is_numeric($id))
+		if(!is_numeric($id))  {
 			return false;
-			
+		}
+		
 		return strcmp($this->pwRecoverId, $id) == 0;
 	}
 	
 	public function doPwRecovery($id, $postArray) {
-		if(!$this->checkPwRecoveryId($id)) 
-			return false;
 			
+		if(!$this->checkPwRecoveryId($id)) {
+			return false;
+		}
+		
 		if(strcmp($this->securityQuestionAnswer, $postArray['sec_q_answer']) != 0) {
 			return false;
 		}
@@ -1220,6 +1226,7 @@ class User {
 			$stmt->execute();
 			
 			return true;
+			
 		} catch ( PDOException $e ) {
 			echo "<br />Connect Error: ". $e->getMessage();
 			return false;

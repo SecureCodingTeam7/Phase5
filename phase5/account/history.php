@@ -1,30 +1,26 @@
 <?php
+session_start();
 ini_set( 'session.cookie_httponly', 1 );
 include_once(__DIR__."/../class/c_user.php");
 include_once(__DIR__."/../include/helper.php");
+include_once(__DIR__."/../include/InvalidSessionException.php");
+include_once(__DIR__."/../header.php");
+
 $loginPage = "../login.php";
 $loginRedirectHeader = "Location: ".$loginPage;
-session_start();
-if ( !isset($_SESSION['user_email']) || !isset($_SESSION['user_level']) || !isset($_SESSION['user_login'])  ) {
-    echo "Session Invalid. <a href='$loginPage'>Click here</a> to sign in.";
-    
-    /* No Session -> Redirect to Login */
-    //header($loginRedirectHeader);
-} else if ( $_SESSION['user_email'] == "" || $_SESSION['user_level'] == "" || $_SESSION['user_login'] == "") {
-	echo "Empty Session Data. <a href='$loginPage'>Click here</a> to sign in.";
-	
-	/* Destroy Session */
-	$_SESSION = array();
-	session_destroy();
-	
-	/* Session Data Invalid -> Redirect to Login */
-	//header($loginRedirectHeader);
-} 
- else if ( $_SESSION['user_level'] ) {
-		header("Location: ../login.php");
-		die();
-	}
-else {
+
+try {
+	validateUserSession(false);
+	$session_valid = true;
+} catch (InvalidSessionException $ex) { 
+	/* DEBUG */
+	// echo $ex->getMessage();
+	$session_valid = false;
+	header("Location:../logout.php");
+	die();
+}
+
+if ($session_valid) {
 	/* Session Valid */
 	$user = new User();
 	$selectedAccount = "none";
@@ -53,38 +49,21 @@ else {
 <!doctype html>
 <html>
 <head>
-	<title>MyBank: Transfer History</title>
+	<title>Account History | myBank</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	<link href="../style/style.css" type="text/css" rel="stylesheet" />
+	<script src="../include/jquery-2.1.3.min.js"></script>
+	<link href="../style/bootstrap.css" rel="stylesheet" />
+	<script src="../include/bootstrap.min.js"></script>
 	<link href="../style/pure.css" type="text/css" rel="stylesheet" />
+	<link href="../style/bootstrap.css" rel="stylesheet">
+	<link href="../style/style.css" type="text/css" rel="stylesheet" />
 </head>
 <body>
-	<div class="content">
-		<div class="top_block header">
-			<div class="content">
-				<div class="navigation">
-					<a href="index.php">Account</a>
-					<a href="transfer.php">Transfer</a>
-					History
-				</div>
-				
-				<div class="balance"><?php if ($selectedAccount > 0) { echo "Account Balance: ".$user->getBalanceForAccount( $selectedAccount );}?></div>
-				<div class="availableFunds"><?php if ($selectedAccount > 0) { echo "Available Funds: ".$user->getAvailableFundsForAccount( $selectedAccount );}?></div>
-				<div class="userpanel">
-					<?php echo $_SESSION['user_email'] ?>
-					<a href="../logout.php">Logout</a><br />
-					<?php 
-					if ($selectedAccount > 0) {
-					echo "Account: ".$selectedAccount;	
-					} else {
-					echo "Account: none";
-					}
-					?>
-				</div>
-			</div>
-		</div>
+	<div id="content">
+	
+		<?php render_user_header($selectedAccount, $user, "Account"); ?>
 		
-		<div class="main">
+		<div id="main">
 		<?php 
 			if (!isset( $_SESSION['selectedAccount'] )) {
 				echo "No account is active at the moment.<br />";

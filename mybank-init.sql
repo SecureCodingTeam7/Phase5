@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 21, 2015 at 10:07 PM
+-- Generation Time: Jan 24, 2015 at 09:57 PM
 -- Server version: 5.6.21
 -- PHP Version: 5.6.3
 
@@ -528,21 +528,24 @@ CREATE TABLE IF NOT EXISTS `users` (
   `is_active` bit(1) NOT NULL DEFAULT b'0',
   `pw_recover_id` varchar(255) NOT NULL,
   `pin` int(11) NOT NULL,
-  `use_scs` int(11) NOT NULL
+  `use_scs` int(11) NOT NULL,
+  `lock_counter` int(11) NOT NULL,
+  `security_question_number` int(11) NOT NULL,
+  `security_question_answer` varchar(255) NOT NULL
 ) ENGINE=InnoDB AUTO_INCREMENT=50 DEFAULT CHARSET=latin1;
 
 --
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `email`, `name`, `passwd`, `salt`, `is_employee`, `is_active`, `pw_recover_id`, `pin`, `use_scs`) VALUES
-(30, 'tattioff42+admin@gmail.com', 'Admin', '$2a$07$CpPbMbae7XcBbb7cr9SKx..xXUC36gc6TfRkTxZJRsZ.XdEfdVZS.', '', b'1', b'1', '', 731471, 0),
-(44, 'tattioff42+user3@gmail.com', 'Third User', '$2a$07$QNpLFNaTfySRctBzh5XxCOxjf3yELCliUueSelfphvkdUkzANdQTW', '', b'0', b'1', '', 598601, 0),
-(45, 'tattioff42+userSCS@gmail.com', 'SCS User', '$2a$07$lGglJBKlm8xHShpPhlbZp.NlPYExhtNP9/VJSkIZrnC3L2m7b1KnO', '', b'0', b'1', '', 900056, 1),
-(46, 'tattioff42+user4@gmail.com', 'Fourth User', '$2a$07$T3p9pEJyC5Bi2MJoLv1YquyEZCwtC1QgWNFaUOMk8nrwB9DDyBsiq', '', b'0', b'1', '', 367263, 0),
-(47, 'tattioff42+user1@gmail.com', 'First User', '$2a$07$Ozs9pyAdm24ltgwwyyvy9euaUFA5DRMlnmGorkv.DQQw47r8YvZOy', '', b'0', b'0', '', 783489, 0),
-(48, 'tattioff42+user2@gmail.com', 'Second User', '$2a$07$n6UciYPFG6ydsJFNdEyf5.TAOYxxNMxcwHU4ti8XCwFlkA4QEXkiO', '', b'0', b'0', '', 570107, 0),
-(49, 'tattioff42+user5@gmail.com', 'Fifth User', '$2a$07$ehlSiwu3yJ9cEtjFXwzpHeRng81MA1idfGARjFNhrQXetKyf68PoS', '', b'0', b'1', '', 852006, 0);
+INSERT INTO `users` (`id`, `email`, `name`, `passwd`, `salt`, `is_employee`, `is_active`, `pw_recover_id`, `pin`, `use_scs`, `lock_counter`, `security_question_number`, `security_question_answer`) VALUES
+(30, 'tattioff42+admin@gmail.com', 'Admin', '$2a$07$CpPbMbae7XcBbb7cr9SKx..xXUC36gc6TfRkTxZJRsZ.XdEfdVZS.', '', b'1', b'1', '', 731471, 0, 0, 0, ''),
+(44, 'tattioff42+user3@gmail.com', 'Third User', '$2a$07$QNpLFNaTfySRctBzh5XxCOxjf3yELCliUueSelfphvkdUkzANdQTW', '', b'0', b'1', '', 598601, 0, 0, 0, ''),
+(45, 'tattioff42+userSCS@gmail.com', 'SCS User', '$2a$07$lGglJBKlm8xHShpPhlbZp.NlPYExhtNP9/VJSkIZrnC3L2m7b1KnO', '', b'0', b'1', '', 900056, 1, 0, 0, ''),
+(46, 'tattioff42+user4@gmail.com', 'Fourth User', '$2a$07$T3p9pEJyC5Bi2MJoLv1YquyEZCwtC1QgWNFaUOMk8nrwB9DDyBsiq', '', b'0', b'1', '', 367263, 0, 0, 0, ''),
+(47, 'tattioff42+user1@gmail.com', 'First User', '$2a$07$Ozs9pyAdm24ltgwwyyvy9euaUFA5DRMlnmGorkv.DQQw47r8YvZOy', '', b'0', b'0', '', 783489, 0, 0, 0, ''),
+(48, 'tattioff42+user2@gmail.com', 'Second User', '$2a$07$n6UciYPFG6ydsJFNdEyf5.TAOYxxNMxcwHU4ti8XCwFlkA4QEXkiO', '', b'0', b'0', '', 570107, 0, 0, 0, ''),
+(49, 'tattioff42+user5@gmail.com', 'Fifth User', '$2a$07$ehlSiwu3yJ9cEtjFXwzpHeRng81MA1idfGARjFNhrQXetKyf68PoS', '', b'0', b'1', '', 852006, 0, 0, 0, '');
 
 --
 -- Indexes for dumped tables

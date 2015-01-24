@@ -1,15 +1,213 @@
 @CHARSET "ISO-8859-1";
+html {
+  overflow-y: scroll;
+}
+
 html, body {
-    margin-left: auto;
-    margin-right: auto;
-    margin-top: 0px; 
-    margin-bottom: 0px; 
-    margin-left: 0px; 
-    margin-right: 0px;
+    margin-top: 0; 
+    margin-bottom: 0; 
+    margin-left: 0; 
+    margin-right: 0;
     padding: 0;
-	width: 100%;
-	height: 100%; 
-	color: #545454;
+	font-family: Arial,Helvetica,sans-serif;
+	font-size: 14px;
+	line-height: 20px;
+	color: #333333;
+	background-color: #ffffff;
+	height:100%;
+	background-image: none;
+	background-repeat: repeat;
+	background-attachment: scroll;
+	background-clip: border-box;
+	background-origin: padding-box;
+	background-size: auto auto;
+	background-position: center center;
+}
+
+.blue-gradient-block{ 
+	display:block;
+	min-height: 80px;
+	background: rgba(0,76,139,1);
+	background: -moz-linear-gradient(top, rgba(0,76,139,1) 0%, rgba(0,96,174,1) 50%, rgba(0,76,139,1) 100%);
+	background: -webkit-gradient(left top, left bottom, color-stop(0%, rgba(0,76,139,1)), color-stop(50%, rgba(0,96,174,1)), color-stop(100%, rgba(0,76,139,1)));
+	background: -webkit-linear-gradient(top, rgba(0,76,139,1) 0%, rgba(0,96,174,1) 50%, rgba(0,76,139,1) 100%);
+	background: -o-linear-gradient(top, rgba(0,76,139,1) 0%, rgba(0,96,174,1) 50%, rgba(0,76,139,1) 100%);
+	background: -ms-linear-gradient(top, rgba(0,76,139,1) 0%, rgba(0,96,174,1) 50%, rgba(0,76,139,1) 100%);
+	background: linear-gradient(to bottom, rgba(0,76,139,1) 0%, rgba(0,96,174,1) 50%, rgba(0,76,139,1) 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#004c8b', endColorstr='#004c8b', GradientType=0 );
+	min-height: 69px;
+	margin-bottom:13px;
+	width:100%;
+}
+
+.content {
+	padding:0;
+	margin:0;
+	min-height: 100%;
+	position: relative;
+	overflow: auto;
+	z-index: 0; 
+}
+
+#header-contents {
+	margin-left:auto;
+	margin-right:auto;
+	width:680px;
+}
+
+#selectedAccountIcon {
+	margin-top:0px;
+	margin-right:40px;
+	padding-left:40px;
+	padding-top:5px;
+	width:150px;
+	height:30px;
+	background-image: url(../images/32_account.png);
+	background-repeat:no-repeat;
+	float:left;
+}
+#balanceAccountIcon {
+	margin-top:0px;
+	margin-right:40px;
+	padding-left:40px;
+	padding-top:5px;
+	width:150px;
+	height:30px;
+	background-image: url(../images/32_MoneyB.png);
+	background-repeat:no-repeat;
+	float:left;
+}
+#availableAccountIcon {
+	margin-top:0px;
+	margin-right:0px;
+	padding-left:40px;
+	padding-top:5px;
+	width:150px;
+	height:30px;
+	background-image: url(../images/32_MoneyA.png);
+	background-repeat:no-repeat;
+	float:left;
+}
+
+#header {
+	font-size: 12px;
+	padding-bottom: 9px;
+	margin: 0px;
+	border-bottom: 1px solid #eeeeee;
+	height:36px!important;
+	background-color: #fbf7f8;
+}
+
+#top-block {
+	height: 95px;
+}
+
+#top-block-main {
+	position:relative;
+	margin-top:0px;
+	margin-left:auto;
+	margin-right:auto;
+	width:67%;
+	background-color:none;
+}
+
+#logo {
+	width:216px;
+	height:93px;
+	background-image: url(../images/myBank.png);
+	float:left;
+}
+
+#navbar {
+	padding-left:20px;
+	padding-top:45px;
+	float:left;
+	color: #3d6083;
+}
+ 
+ #main {
+	position:relative;
+	margin-top:50px;
+	margin-left:auto;
+	margin-right:auto;
+	width:67%;
+	background-color:none;
+}
+
+ .navmenu a:link, .navmenu a:visited {
+	color: #3d6083;
+	background-color:#000000;
+	text-decoration: none; 
+	background:#ffffff;
+	outline: 0;
+}
+
+.navmenu a:hover {
+	color: #fc941a;
+	background-color:#000000;
+	background:#ffffff;
+	outline: 0;
+}
+
+.pure-menu, .pure-menu li a {
+	border: 1px solid transparent;
+	outline: 0;
+} 
+
+.pure-menu li a:hover,.pure-menu li a:focus {
+	border-top: 1px solid #eee;
+	border-left: 1px solid #eee;
+	border-right: 1px solid #eee;
+	outline: 0;
+}
+
+.pure-menu li ul:hover, .pure-menu li li a:hover {
+	border: 0;
+	outline: 0;
+} 
+.pure-menu li ul {
+	border: 0!important; border-top: 1px solid #ddd!important; border-left: 1px solid #eee!important;
+	box-shadow: 1px 2px 3px rgba(0,0,0,.1)!important;
+}
+.pure-menu li a { padding: 13px 20px!important; color: #373737; text-shadow: 0 1px 1px #fff; }
+.pure-menu li li a { padding: 6px 20px!important; }
+.pure-menu-children a { outline: 0; padding: 4px 20px!important; font-size: 14px; }
+.pure-menu-children .pure-menu-separator { margin: 0 2px!important; }
+.pure-menu-children li { border-bottom: 0!important; }
+
+.arrow {
+	display: inline-block; zoom: 1; *display: inline;
+	width: 0; height: 0; vertical-align: middle;
+	border-right: 4px solid transparent; border-left: 4px solid transparent; border-top: 4px solid #888;
+}
+
+.pure-table {
+	font-size:90%;
+	text-align:left;
+}
+
+.table-header-image {
+	height:35px;
+}
+
+.table-header-image img {
+	margin-right:10px;
+}
+
+.tdlarge {
+	min-width:100px;
+	max-width:250px;
+}
+
+.tdsmall {
+	width:20px;
+}
+
+hr {
+  margin: 20px 0;
+  border: 0;
+  border-top: 1px solid #eeeeee;
+  border-bottom: 1px solid #ffffff;
 }
 
 *{font-family:Verdana;}
@@ -18,24 +216,28 @@ html, body {
 a:link {
     color: #424242;
     text-decoration: none;
+	outline: 0;
 }
 
 /* visited link */
 a:visited {
     color: #424242;
     text-decoration: none;
+	outline: 0;
 }
 
 /* mouse over link */
 a:hover {
     color: #424242;
     text-decoration: underline;
+	outline: 0;
 }
 
 /* selected link */
 a:active {
     color: #424242;
     text-decoration: none;
+	outline: 0;
 }
 
 p { 
@@ -63,15 +265,6 @@ p.selectedAccount {
 	padding: 0;
 	font-style:oblique;
 	color: #000000;
-}
-
-.content {
-	padding:0;
-	margin:0;
-	min-height: 100%;
-	position: relative;
-	overflow: auto;
-	z-index: 0; 
 }
 
 em {
@@ -143,16 +336,6 @@ li
 	height: 20px;
 }
 
-.main {
-	position:relative;
-	margin-top:50px;
-	margin-left:auto;
-	margin-right:auto;
-	width:70%;
-	height:500px;
-	background-color:none;
-}
-
 #description {
 	position: absolute;
 	padding-top:10px;
@@ -168,7 +351,7 @@ li
 	position:relative;
 	top:50px;
 	left:20px;
-	width:425px;
+	width:580px;
 	/*height:300px;*/
 	overflow-y:auto;
 	overflow-x:hidden;
@@ -176,8 +359,8 @@ li
 
 .SCSDownload {
 	position:absolute;
-	top:150px;
-	left:550px;
+	top:0px;
+	left:400px;
 	width:220px;
 	height:30px;
 
@@ -291,3 +474,6 @@ li
 	vertical-align: text-top;
 	height:80px;
 }
+
+
+
