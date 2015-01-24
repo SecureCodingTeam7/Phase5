@@ -829,7 +829,7 @@ class User {
 		
 		try{
 			$connection = new PDO( DB_NAME, DB_USER, DB_PASS );
-			$sql = "SELECT passwd, BIN(`is_active` + 0) AS `is_active` FROM users WHERE email = :email LIMIT 1";
+			$sql = "SELECT passwd, lock_counter, BIN(`is_active` + 0) AS `is_active` FROM users WHERE email = :email LIMIT 1";
 				
 			$stmt = $connection->prepare( $sql );
 			$stmt->bindValue( "email", $this->email, PDO::PARAM_STR );
@@ -842,9 +842,24 @@ class User {
 					throw new IsActiveException();
 				}
 				
-				
 				 if( crypt($this->password,$result['passwd']) === $result['passwd']){
 				    $success = true;
+				    $sql = "update users set lock_counter = 0 where email = :email";
+					$stmt = $connection->prepare( $sql );
+					$stmt->bindValue( "email", $this->email, PDO::PARAM_STR );
+					$stmt->execute();
+				} else {
+					if ($result['lock_counter'] < 3) {
+						$sql = "update users set lock_counter = lock_counter + 1 where email = :email";
+						$stmt = $connection->prepare( $sql );
+						$stmt->bindValue( "email", $this->email, PDO::PARAM_STR );
+						$stmt->execute();
+					} else {
+						$sql = "update users set is_active = 0 where email = :email";
+						$stmt = $connection->prepare( $sql );
+						$stmt->bindValue( "email", $this->email, PDO::PARAM_STR );
+						$stmt->execute();
+					}
 				}
 				
 			}
