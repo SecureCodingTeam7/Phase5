@@ -71,6 +71,26 @@ if( !(isset( $_POST['checkRegister'] ) ) ) { ?>
 			    </select>
 		        </div> 
 		        
+		        <div class="pure-control-group">
+				<label for="sec_q_number">Security Question (Needed for Password recovery)</label>
+		        <select id="sec_q_number" name="sec_q_number" size="1">
+				<?php 
+					$counter = 0;
+					foreach($SECURITY_QUESTIONS as $question) {
+						echo "<option value=\"$counter\">$question</option>";
+						$counter = $counter +1;
+					}
+				?>
+			    </select>
+		        </div> 
+		        
+		        
+		        <div class="pure-control-group">
+		            <label for="sec_q_answer">Answer</label>
+		            <input name="sec_q_answer" id="sec_q_answer" type="text" placeholder="Answer" onkeyup="check_answer()" required>
+		            <b id=answer_info></b>
+		        </div>
+		        
 		        <div class="pure-controls">
 		            <button id="SignInButton" type="submit" name="checkRegister" class="pure-button pure-button-primary" onclick="setTimeout(disableFunction, 1);">Finish Registration</button>
 		        </div>
@@ -149,6 +169,19 @@ if( !(isset( $_POST['checkRegister'] ) ) ) { ?>
 		} else {
 			submit_button.disabled = true;
 			un_info.textContent = "Your name must be at least 4 characters long."
+		}
+	}
+	
+	function check_answer() {
+		var an_field = document.getElementById("sec_q_answer")
+		var an_info = document.getElementById("answer_info")
+		
+		if (an_field.value.length >= 4) {
+			submit_button.disabled = false;
+			an_info.textContent = ""
+		} else {
+			submit_button.disabled = true;
+			an_info.textContent = "Answer must be at least 4 characters"
 		}
 	}
 	
