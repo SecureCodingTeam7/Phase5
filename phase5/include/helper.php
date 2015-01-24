@@ -1,4 +1,6 @@
 <?php
+include_once(__DIR__."/InvalidSessionException.php");
+
 function randomDigits( $length ) {
 	$digits = '';
 
@@ -109,6 +111,56 @@ function getAccountOwner( $accountNumber ) {
 	}
 }
 
+function validateUserSession( $is_employee ) {
+	
+	$session_state = session_status();
+	
+	if ( $session_state == PHP_SESSION_NONE ) {
+		//There is no active session
+		throw new InvalidSessionException("No active Session. <a href=\"../logout.php\">Click here, to log out.</a>");
+		//session_start();
+	}
+	
+	else if ( $session_state == PHP_SESSION_DISABLED ) {
+		//Sessions are not available
+		throw new InvalidSessionException("No Sessions available.");
+	}
+	
+	else if ( $session_state == PHP_SESSION_ACTIVE ) {
+		
+		if ( !isset($_SESSION['user_email']) || !isset($_SESSION['user_level']) || !isset($_SESSION['user_login']) ) {
+			
+			/* Destroy Session */
+			$_SESSION = array();
+			session_destroy();
+			
+			throw new InvalidSessionException("Session Invalid.");
+			
+			/* No Session -> Redirect to Login */
+			//header($loginRedirectHeader);
+			
+		}
+
+		else if ( $_SESSION['user_email'] == "" || $_SESSION['user_level'] == "" || $_SESSION['user_login'] == "") {
+			
+			/* Destroy Session */
+			$_SESSION = array();
+			session_destroy();
+			
+			throw new InvalidSessionException("Empty Session Data.");
+			
+			/* Session Data Invalid -> Redirect to Login */
+			//header($loginRedirectHeader);
+			
+		} 
+		
+		else if(!isset ($is_employee) || ($_SESSION['user_level'] != $is_employee)) {
+			throw new InvalidSessionException("Incorrect User Level.");
+			// header("Location: ../login.php");
+			// die();
+		}
+	}
+}
 
 function checkUserExists( $email ) {
 	try {
