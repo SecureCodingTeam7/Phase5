@@ -547,6 +547,18 @@ class User {
 		} else {
 			throw new InvalidInputException("Please select whether you use scs or not.");
 		}
+		
+		if( isset( $data['sec_q_number'] ) ) {
+			$this->securityQuestionNumber = stripslashes( strip_tags( $data['sec_q_number'] ) );
+		} else {
+			throw new InvalidInputException("Security Question not specified.");
+		}
+		
+		if( isset( $data['sec_q_answer'] ) ) {
+			$this->securityQuestionAnswer = stripslashes( strip_tags( $data['sec_q_answer'] ) );
+		} else {
+			throw new InvalidInputException("Security Question Answer not specified.");
+		}
 
 
 		// Input seems valid, proceed with registration
@@ -568,7 +580,7 @@ class User {
 			$connection = new PDO( DB_NAME, DB_USER, DB_PASS );
 			$connection->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
 	 
-			$sql = "INSERT INTO users (email,name,passwd,is_employee,is_active,pin,use_scs) VALUES (:email,:name,:password,:isEmployee,:isActive,:pin,:use_scs)";
+			$sql = "INSERT INTO users (email,name,passwd,is_employee,is_active,pin,use_scs,security_question_number,security_question_answer) VALUES (:email,:name,:password,:isEmployee,:isActive,:pin,:use_scs,:security_question_number,:security_question_answer)";
 			$stmt = $connection->prepare( $sql );
 			$stmt->bindValue( "email", $this->email, PDO::PARAM_STR );
 			$stmt->bindValue( "name", $this->name, PDO::PARAM_STR );
@@ -577,6 +589,9 @@ class User {
 			$stmt->bindValue( "isActive", false, PDO::PARAM_STR );
 			$stmt->bindValue( "pin", $pin, PDO::PARAM_STR );
 			$stmt->bindValue( "use_scs", $this->useScs, PDO::PARAM_STR );
+			$stmt->bindValue( "use_scs", $this->useScs, PDO::PARAM_STR );
+			$stmt->bindValue( "security_question_number", $this->securityQuestionNumber, PDO::PARAM_STR );
+			$stmt->bindValue( "security_question_answer", $this->securityQuestionAnswer, PDO::PARAM_STR );
 			
 			$stmt->execute();
 				
