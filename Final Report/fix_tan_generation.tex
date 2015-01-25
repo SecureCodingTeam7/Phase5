@@ -1,0 +1,42 @@
+\chapter{Fix of TAN Generation}
+\section{Affected Files}
+\begin{itemize}
+	\item c\_user.php : line 324++
+	\item helper.php : line 216
+\end{itemize}
+
+\section{Description}
+
+Our app offers the possibility to use a SmartCardSimulator to generate transaction codes for single or batch transactions. This code can then be entered at our website or in the batch transaction batch file.
+To verify the TAN, the webservice is using the same computations as the SCS. This includes the hashing of a string containing the current time as seed, the destination account, the amount and the pin of the user. This String was hashed with md5. This was a vulnerability because md5 is not secure in terms of collision attacks. So we changed the hashing algorithm to sha256 which generates a 256 bit long hash instead of 128 bit. To receive the same results as the java code and the c code for parsing batch files, we had to modify the hashing, shown in Listing \ref{listing:sha256}. The hash function returns a string with a 128 bit  hexadecimal number. 16 of this 32 characters are pairwaised concatenated and transformed into decimal numbers. Because this process ingores possible signed numbers, each decimal number greater than 127 and to be substracted by 256. Of these rsulting numbers the absolute values of the first 16 numbers is concatenated and trimmed to 15 characters.   \newline
+\newline
+
+\begin{lstlisting}[caption = Generation of a TAN using sha256, label=listing:sha256]
+	function generateTanWithSeed($seed,$pin,$destination,$amount){
+	
+	$plaintext = $seed.$pin.$destination.$amount.$seed;
+	//$hash = $this->generateMD5Hash($plaintext);
+	$hash = hash('sha256',$plaintext);
+	$hash_array = array();
+	for ($i=0;$i<16;$i += 2) {
+	$tmp = substr($hash, $i,1).substr($hash, $i+1,1);
+	array_push($hash_array, hexdec($tmp));
+	}
+	$hash_string = "";
+	for ($j=0;$j<16;$j++) {
+	$tmp = $hash_array[$j];
+	if ($tmp > 127) {
+	$tmp -= 256;
+	}
+	$hash_string .= strval(abs($tmp));
+	}
+	return substr($hash_string,0,15);
+	}
+\end{lstlisting}
+The next problem was the  unavailbility of the time server which was used to synchronize the SCS and the webservice. Also it ensures that transaction codes for an transaction with the same amount and destinations differs over the time. This results in a stronger protecion against brutforcing the transaction codes. 
+To fix this problem we simply changed the time server from that the time is requested, shown in Listing \ref{listing:time.}
+
+\begin{lstlisting}[caption= New TimeServer IP, label=listing:time]
+	function getUTCTime(){
+	$timeserver = "129.6.15.28";
+\end{lstlisting}

@@ -1,7 +1,7 @@
 \chapter{Security Measures}
 
 \section{PDF Password Protection}
-The TAN List of our customers are password protected. That ensures that only customer himself can access the transaction codes To porotect the pdfs we used thethird party library FDPI.
+The TAN List of our customers are password protected. That ensures that only customer himself can access the transaction codes. To porotect the pdfs we used thethird party library FDPI.
 \section{HTTPS}
 Our webservice uses the HTTPS protocoll to encrypt all transmitted data to and from our clients.
 This prevents attackers from reading sensitive data via man-in-the-middle attacks.
@@ -12,4 +12,7 @@ The session cookie of an user is only transmitted via HTTP, can not be accessed 
 \section{Prepared Statements for SQL database}
 We protected our web service against sql injections by using prepared statements for database requests.
 \section{CSRF Token}
+\section{Secure Generation of Transaction Codes}
+
+
 
