@@ -1,0 +1,46 @@
+\chapter{Lock out Mechanism}
+
+To avoid brute forcing attacks when logging in and transferring money (TANs) we implemented a mechanism which blocks the user after 5 attempts with invalid input. Thus we created a new database field in the \textit{users} table (lock\_counter, int). 
+
+\section{Affected Files}
+\begin{itemize}
+	\item c\_user.php : line 898 new methods
+	\item c\_user.php : lines 455, 469, 877  method call resetLockCounter()
+		\item c\_user.php : lines 459, 472, 883  method call incrementLockCounter()
+\end{itemize}
+
+\section{Additions}
+
+\begin{lstlisting}[caption = New methods]
+function incrementLockCounter() {
+	$connection = new PDO( DB_NAME, DB_USER, DB_PASS );
+	$sql = "SELECT lock_counter FROM users WHERE email = :email LIMIT 1";
+	$stmt = $connection->prepare( $sql );
+	$stmt->bindValue( "email", $this->email, PDO::PARAM_STR );
+	$stmt->execute();
+	$result = $stmt->fetch();
+	if ($result['lock_counter'] < 5) {
+		$sql = "update users set lock_counter = lock_counter + 1 where email = :email";
+		$stmt = $connection->prepare( $sql );
+		$stmt->bindValue( "email", $this->email, PDO::PARAM_STR );
+		$stmt->execute();
+		return false;
+	} else {
+		$sql = "update users set is_active = 0, lock_counter = 0 where email = :email";
+		$stmt = $connection->prepare( $sql );
+		$stmt->bindValue( "email", $this->email, PDO::PARAM_STR );
+		$stmt->execute();
+		return true;
+	}
+	
+	$connection = null;
+}
+function resetLockCounter() {
+	$connection = new PDO( DB_NAME, DB_USER, DB_PASS );
+	$sql = "update users set lock_counter = 0 where email = :email";
+	$stmt = $connection->prepare( $sql );
+	$stmt->bindValue( "email", $this->email, PDO::PARAM_STR );
+	$stmt->execute();
+	$connection = null;
+}
+\end{lstlisting}
