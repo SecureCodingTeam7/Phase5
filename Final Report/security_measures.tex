@@ -19,6 +19,41 @@ To generate secure transaction codes for single or batch transfers, we use the h
 Since the timestamp is part of the TAN, one transaction code is only valid for at maximum 2 minutes, because the webservice only generate two tans for verifcation. One with the current timestamp and one with a timestamp one minute in future. Therefore transaction codes which an attacker got access to in some way, are useless in less than 2 minutes. That minimizes the risk of unauthorized transactions.
 \section{Secure Password Recovery}
 The Password Recovery for users is done in 3 steps. The user requests a new password at the website. Then he receives an email with n personalized URL. By clicking on it , the user gets to the page where he have to select a security question and the corresponding that was defined at the registration. The answer to one of this question was given at the registration. Now he can enter his new password.
+\section{Obfuscation of SCS} 
+The Byte Code of the java application SCS.jar was obfuscated with ProGuard in order to complicate the reverse engineering.
+In Listing \ref{listing:proguard}, the corresponding ProGuard config is shown.
+
+\begin{lstlisting}[caption=Configuration File of ProGuard, label=listing:proguard]
+-injars /Volumes/MacintoshHD/Users/mep/Downloads/scs/scs.jar
+-outjars /Volumes/MacintoshHD/Users/mep/Downloads/scs/scs_out.jar
+	
+-libraryjars /Library/Java/JavaVirtualMachines/jdk1.7.0_71.jdk/Contents/Home/jre/lib/rt.jar
+	
+-libraryjars /Library/Java/JavaVirtualMachines/jdk1.7.0_71.jdk/Contents/Home/jre/lib/jfxrt.jar
+	
+-dontshrink
+-dontwarn com.javafx.**
+-dontwarn org.apache.**
+	
+-keepattributes '*Annotation*'
+	
+-adaptresourcefilecontents **.fxml
+-keepclassmembernames class * {
+	@javafx.fxml.FXML *;
+}
+	
+-keepclasseswithmembers public class com.javafx.main.Main, scs.Main {
+	public *; public static *;
+}
+	
+	
+# Keep - Applications. Keep all application classes, along with their 'main'
+# methods.
+-keepclasseswithmembers public class * {
+	public static void main(java.lang.String[]);
+}
+\end{lstlisting}
+
 \section{Secure Handling of uploaded files}
 Uploaded Files for batch transaction are handled in a secure manner to avoid damage of uploaded malicious code. This includes the usage of the default PHP temporary folder. All files are stored in /tmp and get a randomly chosen name. This has two effects. First of all files are not stored at the webroot and can not be access via an unsecure webserver. Secondly, renaming files before passing them to the c parser, prevents malicous code in the filename to be executed.
 \newline
