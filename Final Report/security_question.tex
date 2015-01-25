@@ -1,0 +1,271 @@
+\chapter{Security Question for Password Recovery}
+
+In Phase 3 we developed a password recovery functionality, which sends the user a generated new password via email. Because the user had no opportunity to change the password it would be easy for an attacker to log into any account if he somehow could get the user's emails.
+
+Therefore we included a security question in the registration process, the user must answer correctly when recovering his password.
+
+We added two database fields into the \textit{users} table. The number of the security question the user chose, can be between 0 and 4 and the answer of the question are saved in them.
+
+\section{Diff}
+
+\begin{lstlisting}[caption = c\_user.php]
+line 26
++	public $securityQuestionNumber = null;
++	public $securityQuestionAnswer = null;
+line 550
++		
++		if( isset( $data['sec_q_number'] ) ) {
++			$this->securityQuestionNumber = stripslashes( strip_tags( $data['sec_q_number'] ) );
++		} else {
++			throw new InvalidInputException("Security Question not specified.");
++		}
++		
++		if( isset( $data['sec_q_answer'] ) ) {
++			$this->securityQuestionAnswer = stripslashes( strip_tags( $data['sec_q_answer'] ) );
++		} else {
++			throw new InvalidInputException("Security Question Answer not specified.");
++		}
+
+line 571
+-			$sql = "INSERT INTO users (email,name,passwd,is_employee,is_active,pin,use_scs) VALUES (:email,:name,:password,:isEmployee,:isActive,:pin,:use_scs)";
++			$sql = "INSERT INTO users (email,name,passwd,is_employee,is_active,pin,use_scs,security_question_number,security_question_answer) VALUES (:email,:name,:password,:isEmployee,:isActive,:pin,:use_scs,:security_question_number,:security_question_answer)";
+
+line 592
++			$stmt->bindValue( "use_scs", $this->useScs, PDO::PARAM_STR );
++			$stmt->bindValue( "security_question_number", $this->securityQuestionNumber, PDO::PARAM_STR );
++			$stmt->bindValue( "security_question_answer", $this->securityQuestionAnswer, PDO::PARAM_STR );
+
+line 745
+-			$sql = "SELECT id, name, use_scs, email, passwd, pin, BIN(`is_employee` + 0) AS `is_employee`, BIN(`is_active` + 0) AS `is_active`, pw_recover_id FROM users WHERE email = :email LIMIT 1";
++			$sql = "SELECT id, name, use_scs, email, passwd, pin, BIN(`is_employee` + 0) AS `is_employee`, BIN(`is_active` + 0) AS `is_active`, pw_recover_id, security_question_number, security_question_answer FROM users WHERE email = :email LIMIT 1";
+ 
+ line 764
+ +			$this->securityQuestionNumber = $result['security_question_number'];
+ +			$this->securityQuestionAnswer = $result['security_question_answer'];
+ 
+ line 790
+ -			$sql = "SELECT id, name, email, passwd, use_scs, pin, BIN(`is_employee` + 0) AS `is_employee`, BIN(`is_active` + 0) AS `is_active`, pw_recover_id FROM users WHERE id = :id LIMIT 1";
+ +			$sql = "SELECT id, name, email, passwd, use_scs, pin, BIN(`is_employee` + 0) AS `is_employee`, BIN(`is_active` + 0) AS `is_active`, pw_recover_id, security_question_number, security_question_answer FROM users WHERE id = :id LIMIT 1";
+  	
+line 808
++			$this->securityQuestionNumber = $result['security_question_number'];
++			$this->securityQuestionAnswer = $result['security_question_answer'];
+ 	
+line 1195
+-	public function doPwRecovery($id) {
++	public function checkPwRecoveryId($id) {
+ 		
+ 		if(!is_numeric($id))
+ 			return false;
+-		if(strcmp($this->pwRecoverId, $id) == 0) {
+-			$newPassword = randomDigits(8);
+ 			
+-			try {
+-				$connection = new PDO( DB_NAME, DB_USER, DB_PASS );
+-				$sql = "UPDATE users set passwd = :password, pw_recover_id='NULL' WHERE id = :id";
+-		
+-				$stmt = $connection->prepare( $sql );
+-				$stmt->bindValue( "password", generateSaltedHash($newPassword), PDO::PARAM_STR );
+-				$stmt->bindValue( "id", $this->id, PDO::PARAM_STR );
+-				$stmt->execute();
+-		
+-				$connection = null;
++		return strcmp($this->pwRecoverId, $id) == 0;
++	}
++	
++	public function doPwRecovery($id, $postArray) {
++		if(!$this->checkPwRecoveryId($id)) 
++			return false;
+-				// Send the mail
++		if(strcmp($this->securityQuestionAnswer, $postArray['sec_q_answer']) != 0) {
++			return false;
++		}
++		
++		try {
++			$connection = new PDO( DB_NAME, DB_USER, DB_PASS );
++			$connection->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
+-				$message= "your new Password is: $newPassword";
+-				
+-				$this->sendMail($this->email, $message, "Your new Password");
+-				
+-				return true;
++			$sql = "update users set passwd = :password, pw_recover_id = NULL where id = :id";
+} catch ( PDOException $e ) {
+-				echo "<br />Connect Error: ". $e->getMessage();
+-				return false;
+-			}
++			$stmt = $connection->prepare( $sql );
++			$stmt->bindValue( "password", generateSaltedHash($postArray['password']), PDO::PARAM_STR );
++			$stmt->bindValue( "id", $this->id, PDO::PARAM_STR );
++			$stmt->execute();
+
+-		} else {
++			return true;
++		} catch ( PDOException $e ) {
++			echo "<br />Connect Error: ". $e->getMessage();
+ 			return false;
+ 		}
+-		
+ 	}
+\end{lstlisting}
+
+\begin{lstlisting}[caption = conf.php]
+line 9
+$SECURITY_QUESTIONS = array("What is the first name of the person you first kissed?",
++				"What is the last name of the teacher who gave you your first failing grade?",
++				"What is the name of the place your wedding reception was held?",
++				"In what city or town did you meet your spouse/partner?",
++				"What was the make and model of your first car?" );
+ 
+\end{lstlisting}
+
+
+\begin{lstlisting}[caption = register.php]
+line 74
++		        <div class="pure-control-group">
++				<label for="sec_q_number">Security Question (Needed for Password recovery)</label>
++		        <select id="sec_q_number" name="sec_q_number" size="1">
++				<?php 
++					$counter = 0;
++					foreach($SECURITY_QUESTIONS as $question) {
++						echo "<option value=\"$counter\">$question</option>";
++						$counter = $counter +1;
++					}
++				?>
++			    </select>
++		        </div> 
++		        
++		        
++		        <div class="pure-control-group">
++		            <label for="sec_q_answer">Answer</label>
++		            <input name="sec_q_answer" id="sec_q_answer" type="text" placeholder="Answer" onkeyup="check_answer()" required>
++		            <b id=answer_info></b>
++		        </div>
++		        
+
+line 175
++	function check_answer() {
++		var an_field = document.getElementById("sec_q_answer")
++		var an_info = document.getElementById("answer_info")
++		
++		if (an_field.value.length >= 4) {
++			submit_button.disabled = false;
++			an_info.textContent = ""
++		} else {
++			submit_button.disabled = true;
++			an_info.textContent = "Answer must be at least 4 characters"
++		}
++	}
++	
+\end{lstlisting}
+
+\begin{lstlisting}[caption = pw\_recovery.php]
+line 22
++	
+ 	$user = new User();
+ 	$user->getUserDataFromEmail($_GET['email']);
++	
++	
++	if( isset($_POST['password'])) {
++		if($user->doPwRecovery($_GET['id'], $_POST))
++			echo "Success, your password was set to the newly entered one!";
++		else
++			echo "Something went wrong, please try again later!";
++			
++		die();
++	}
++	
+ 	$success = false;
+ 	if($user->email) {
+ 		// if we found the mail it is a valid user
+-		$success = $user->doPwRecovery($_GET['id']);
++		$success = $user->checkPwRecoveryId($_GET['id']);
+ 	}?>
+ 	
+line 65
+<p>
+ 			<?php 
+ 			if($success) {
+-				echo "Your new password has been sent to you via email!";
++			?>
++			<form method="post" action="" class="pure-form pure-form-aligned">
++		    <fieldset>
++				<div class="pure-control-group">
++				<label for="sec_q_number">Security Question:</label>
++		        <label name="sec_q_number" id="sec_q_number"><?php echo $SECURITY_QUESTIONS[$user->securityQuestionNumber] ?></label>
++		        </div> 
++		        
++		        
++		        <div class="pure-control-group">
++		            <label for="sec_q_answer">Answer</label>
++		            <input name="sec_q_answer" id="sec_q_answer" type="text" placeholder="Answer" required>
++		        </div>
++		        
++		        <div class="pure-control-group">
++		            <label for="password">New Password</label>
++		            <input name="password" id="password" type="password" placeholder="***********" onkeyup="check_pw()" required>
++		            <b id=password_info></b>
++		        </div>
++		        
++		        <div class="pure-control-group">
++		            <label for="confirm_password">Confirm Password</label>
++		            <input name="confirm_password" id="confirm_password" type="password" placeholder="***********" onkeyup="check_pw()" required>
++		            <b id=confirm_password_info></b>
++		        </div>
++		        
++		        <div class="pure-controls">
++		            <button id="SendButton" type="submit" name="recoverPassword" class="pure-button pure-button-primary" onclick="setTimeout(disableFunction, 1);">Submit</button>
++		        </div>
++		        
++		    </fieldset>
++			</form>
++			<?php 
+
+line 153
+-	<script>
+-		function disableFunction() {
+-		    document.getElementById("SignInButton").disabled = 'true';
+-		}
+-	</script>
+
+line 213
++
++	<script>
++		function disableFunction() {
++		    document.getElementById("SignInButton").disabled = 'true';
++		}
++		
++		var pw_info = document.getElementById("password_info")
++	var confirm_pw_info = document.getElementById("confirm_password_info")
++	
++	var pw_field = document.getElementById("password")
++	var confirm_pw_field = document.getElementById("confirm_password")
++	
++	var submit_button = document.getElementById("SendButton")
++	submit_button.disabled = true
++	
++	function check_pw() {
++		// lets check if the pw is strong enough
++		var pw = pw_field.value
++		var lowercase = pw.search("[A-Z]")
++		var uppercase = pw.search("[a-z]")
++		var number = pw.search("[0-9]")
++		
++		if(pw.length < 8 || lowercase == -1 || uppercase == -1 || number == -1) {
++			pw_info.textContent = "Password must have at least eight characters, one upper case, one lower case letter and one number"
++			submit_button.disabled = true
++		} else {
++			pw_info.textContent = ""
++		}
++	
++		if(confirm_pw_field.value != pw_field.value) {
++			confirm_pw_info.textContent = "The two passwords do not match!"
++			submit_button.disabled = true
++		} else {
++			confirm_pw_info.textContent = ""
++			submit_button.disabled = false
++		}
++	}
++
++	</script>
+\end{lstlisting}
