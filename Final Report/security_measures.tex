@@ -8,15 +8,20 @@ This prevents attackers from reading sensitive data via man-in-the-middle attack
 \section{Strong password policy}
 We enforce the user to choose a string password to minimize the possible threat based on brute force attacks.
 \section{Secure Session Management}
-The session cookie of an user is only transmitted via HTTP, can not be accessed via javascript and expires after 30 minutes. So attackers cannot bypassing the authentication schema by stealing cookies of logged in users.
+The session cookie of an user is only transmitted via HTTPS, can not be accessed via javascript and expires after 30 minutes. So attackers cannot bypass the authentication schema by stealing cookies of logged in users.
 \section{Prepared Statements for SQL database}
 We protected our web service against sql injections by using prepared statements for database requests.
 \section{CSRF Token}
-\section{Secure Generation of Transaction Codes}
 \section{Protection of C Parser against Heap/Buffer Overflows}
+To our knowledge there exist no possibilities for heap or stack overflows, since we tried to avoid allocating space on the heap and used secure functions for copying buffers. Also we add the compiler flag \textit{-fPIE} and \textit{-fstack-protector-all} in gcc to randomize address locations and a canary, making it harder for an attacker to cause buffer overflows.
+\section{Secure TAN Generation}
+To generate secure transaction codes for single or batch transfers, we use the hash algorithm sha256 in combination with a current timestamp as seeed. Time syncrhonization is done via a NTP server. The timestamp is concatenated with information of one transfer, including the destination account, the amount that will be transferred and the personal PIN of the user. A hash of this information is than trimmed to 15 digits. 
+Since the timestamp is part of the TAN, one transaction code is only valid for at maximum 2 minutes, because the webservice only generate two tans for verifcation. One with the current timestamp and one with a timestamp one minute in future. Therefore transaction codes which an attacker got access to in some way, are useless in less than 2 minutes. That minimizes the risk of unauthorized transactions.
+\section{Secure Password Recovery}
+The Password Recovery for users is done in 3 steps. The user requests a new password at the website. Then he receives an email with n personalized URL. By clicking on it , the user gets to the page where he have to select a security question and the corresponding that was defined at the registration. The answer to one of this question was given at the registration. Now he can enter his new password.
 \section{Secure Handling of uploaded files}
 Uploaded Files for batch transaction are handled in a secure manner to avoid damage of uploaded malicious code. This includes the usage of the default PHP temporary folder. All files are stored in /tmp and get a randomly chosen name. This has two effects. First of all files are not stored at the webroot and can not be access via an unsecure webserver. Secondly, renaming files before passing them to the c parser, prevents malicous code in the filename to be executed.
 \newline
-Another precoution ew took, is to delete this files right after parsing them, so that malicous code can't be executed later on. 
+Another precoution we took, is to delete this files right after parsing them, so that malicous code can't be executed later on. 
 
 
