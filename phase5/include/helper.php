@@ -111,22 +111,29 @@ function getAccountOwner( $accountNumber ) {
 	}
 }
 
+function session_is_active()
+{
+    $setting = 'session.use_trans_sid';
+    $current = ini_get($setting);
+    if (FALSE === $current)
+    {
+        throw new UnexpectedValueException(sprintf('Setting %s does not exists.', $setting));
+    }
+    $result = @ini_set($setting, $current); 
+    return $result !== $current;
+}
+
 function validateUserSession( $is_employee ) {
 	
-	$session_state = session_status();
+	$session_state = session_is_active();
 	
-	if ( $session_state == PHP_SESSION_NONE ) {
+	if (! $session_state ) {
 		//There is no active session
 		throw new InvalidSessionException("No active Session. <a href=\"../logout.php\">Click here, to log out.</a>");
 		//session_start();
 	}
 	
-	else if ( $session_state == PHP_SESSION_DISABLED ) {
-		//Sessions are not available
-		throw new InvalidSessionException("No Sessions available.");
-	}
-	
-	else if ( $session_state == PHP_SESSION_ACTIVE ) {
+	else {
 		
 		if ( !isset($_SESSION['user_email']) || !isset($_SESSION['user_level']) || !isset($_SESSION['user_login']) ) {
 			
