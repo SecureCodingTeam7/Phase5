@@ -13,6 +13,10 @@ The session cookie of an user is only transmitted via HTTP, can not be accessed 
 We protected our web service against sql injections by using prepared statements for database requests.
 \section{CSRF Token}
 \section{Secure Generation of Transaction Codes}
-
+\section{Protection of C Parser against Heap/Buffer Overflows}
+\section{Secure Handling of uploaded files}
+Uploaded Files for batch transaction are handled in a secure manner to avoid damage of uploaded malicious code. This includes the usage of the default PHP temporary folder. All files are stored in /tmp and get a randomly chosen name. This has two effects. First of all files are not stored at the webroot and can not be access via an unsecure webserver. Secondly, renaming files before passing them to the c parser, prevents malicous code in the filename to be executed.
+\newline
+Another precoution ew took, is to delete this files right after parsing them, so that malicous code can't be executed later on. 
 
 

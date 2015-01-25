@@ -163,8 +163,9 @@ if( isset($_GET['email']) && isset($_GET['id']) ) {
 		// if we found the mail it is a valid user
 		$user->sendPwRecoveryMail();
 	} else {
-+	// timeout for 3 seconds, so it's not that easy to guess existing accounts via the processing time.
-+	sleep(3);
+		// timeout , so it's not that easy to guess existing accounts via the processing time.
+		$timeout = rand(2,4);
+		sleep($timeout);
 	}?>
 	<!doctype html>
 	<html>
