@@ -6,7 +6,7 @@
 \end{itemize}
 
 \section{description}
-In order to protect the session cookie and its attributes against attackers the added the following settings to httpd.conf:
+In order to protect the session cookie and its attributes against attackers the following settings were added to httpd.conf:
 
 \begin{lstlisting}
 	    php_value session.cookie_httponly true
@@ -14,8 +14,8 @@ In order to protect the session cookie and its attributes against attackers the 
 	    php_value session.cookie_lifetime 1800
 \end{lstlisting}
 
-The httponly flag was already set in phase 3 and prevents that the cookie can be acessed by javascript.
-The http\_secure flag ensures that cookies are only sent via HTTPS. \newline
-Futhermore the attribute cookie\_lifetime defines the expire data for a cookie. A short lifetime decreases the chances for an attacker to sucessfully use a foreign session cookie to authenticate with the web service.
+The httponly flag was already set in phase 3 and prevents that the session cookie can be acessed by javascript.
+The http\_secure flag ensures that session cookies are only sent via HTTPS. \newline
+Futhermore the attribute session cookie\_lifetime defines the expire data for a session cookie. A short lifetime decreases the chances for an attacker to sucessfully use a foreign session cookie to authenticate with the web service.
 
 

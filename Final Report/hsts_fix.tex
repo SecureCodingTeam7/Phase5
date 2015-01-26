@@ -5,8 +5,9 @@
 
 \section{Description}
 
-We added an HTTP Scrict Transport Security Header to teh config of our web server. Therefore the server notifies the client's browser that all traffic has to be exchanged via HTTPS.
+We added an HTTP Scrict Transport Security Header to the config of our web server. Therefore the server notifies the client's browser that all traffic has to be exchanged via HTTPS.
 To do so the added the following line to the Virtual Host Config:
-
-Header add Strict-Transport-Security "max-age=15768000"
-
+\begin{lstlisting}[caption = Command for enabling HSTS]
+	Header add Strict-Transport-Security "max-age=15768000"
+\end{lstlisting}
+The directive "max-age" indicates the number of seconds that the browser should automatically convert all HTTP requests to HTTPS.
