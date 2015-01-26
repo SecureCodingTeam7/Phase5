@@ -59,4 +59,10 @@ Uploaded Files for batch transaction are handled in a secure manner to avoid dam
 \newline
 Another precoution we took, is to delete this files right after parsing them, so that malicous code can't be executed on our server later on. 
 
+\section{Lock Out Mechanism}
+
+To avoid Brute Force attacks, we implemented an lock out mechanism at login and when entering TANs.
+
+Hence the a user will be blocked after a certain count of invalid inputs. After that no further login is possible for the user and he must be approved again by an employee.
+
 
