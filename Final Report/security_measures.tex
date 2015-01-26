@@ -11,7 +11,8 @@ We enforce the user to choose a strong password to minimize the possible threat 
 The session cookie of an user is only transmitted via HTTPS, can not be accessed via javascript and expires after 30 minutes. So attackers cannot bypass the authentication schema by stealing cookies of logged in users.
 \section{Prepared Statements for SQL database}
 We protected our web service against sql injections by using prepared statements for database requests.
-\section{CSRF Token}
+\section{Anti-CSRF Token}
+We attached an anti-CSRF token to all of our forms. This token is generated for each session and its existence \& correctness is verified upon submission of all post requests. Since external websites have no knowledge of the token value, they can not successfuly submit post requests in a CSRF attack.
 \section{Protection of C Parser against Heap/Buffer Overflows}
 To our knowledge there exist no possibilities for heap or stack overflows, since we tried to avoid allocating space on the heap and used secure functions for copying buffers. Also we add the compiler flag \textit{-fPIE} and \textit{-fstack-protector-all} in gcc to randomize address locations and a canary, making it harder for an attacker to cause buffer overflows.
 \section{Secure TAN Generation}
