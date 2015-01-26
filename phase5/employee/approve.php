@@ -22,21 +22,20 @@ try {
 
 if ($session_valid) {
 	/* Session Valid */
-	$user = new User();
-	$user->getUserDataFromEmail( $_SESSION['user_email'] );
+	$user = DataAccess::getUserByEmail ( $_SESSION['user_email'] );
 	
 	$submitSucces = false;
 	if (isset($_POST['approve'])) {
 		$submitMessage = "Please select what to approve.";
 
 		if(isset($_POST['transactions'])) {
-			$user->approveTransactions($_POST['transactions']);
+			EmployeeController::approveTransactions($_POST['transactions']);
 			$submitMessage = "Approval was successful!";
 		}
 		
 		if( isset( $_POST['users'] ) ) {
 			try {
-			$user->approveUsers( $_POST );
+			EmployeeController::approveUsers( $_POST );
 			$submitMessage = "Approval was successful!";
 			} catch ( InvalidInputException $ex ) {
 				$submitMessage = $ex->errorMessage();
@@ -71,7 +70,7 @@ if ($session_valid) {
 					}
 					echo "Currently unapproved Transactions<br /><br />";
 					
-					$transactions = $user->getInApprovedTransactions();
+					$transactions = TransactionController::getInApprovedTransactions();
 					$odd = true;
 					$count = 0;
 					
@@ -114,7 +113,7 @@ if ($session_valid) {
 				<?php 
 					echo "Currently unapproved Users<br /><br />";
 					
-					$users = $user->getInApprovedUsers();
+					$users = DataAccess::getInApprovedUsers();
 					$odd = true;
 					$count = 0;
 					

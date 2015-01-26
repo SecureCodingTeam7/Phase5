@@ -29,8 +29,8 @@ if ($session_valid) {
 		die();
 	} else {
 		/* Session Valid */
-		$user = new User();
-		$user->getUserDataFromEmail( $_SESSION['user_email'] );	
+		$user = DataAccess::getUserByEmail ( $_SESSION['user_email'] );
+		
 	?>
 		<!doctype html>
 		<html>
@@ -53,15 +53,14 @@ if ($session_valid) {
 					<div id="main">
 					<?php 
 					
-						$selectedUser = new User();
-						$selectedUser->getUserDataFromID( $_POST['id'] );
+						$selectedUser = DataAccess::getUserByID ( $_POST['id'] );
 						echo "<a href=\"users.php\">back to user list</a>";
 						echo "  <br /><p style=text-indent:1em;>Details for ".$selectedUser->email."</p>";
 						
 						$accounts = $selectedUser->getAccounts();
 						
 						foreach($accounts as $account) {
-							$transactions = $selectedUser->getTransactions( $account );
+							$transactions = DataAccess::getTransactions( $selectedUser, $account );
 							$odd = true;
 							$count = 0;
 							

@@ -27,8 +27,7 @@ if ($session_valid) {
 	}
 	
 	/* Session Valid */
-	$user = new User();
-	$user->getUserDataFromEmail( $_SESSION['user_email'] );	
+	$user = DataAccess::getUserByEmail ( $_SESSION['user_email'] );
 ?>
 <!doctype html>
 <html>
@@ -52,7 +51,7 @@ if ($session_valid) {
 			<?php 
 				echo "Current Customers (Click on the email to see details)<br /><br />";
 				
-				$users = $user->getAllUsers();
+				$users = DataAccess::getAllUsers();
 				$odd = true;
 				$count = 0;
 				

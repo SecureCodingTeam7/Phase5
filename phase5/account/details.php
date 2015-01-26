@@ -22,9 +22,8 @@ try {
 
 if ($session_valid) {
 	/* Session Valid */
-	$user = new User();
+	$user = DataAccess::getUserByEmail ( $_SESSION['user_email'] );
 	$selectedAccount = "none";
-	$user->getUserDataFromEmail( $_SESSION['user_email'] );
 	
 	if ( isset( $_SESSION['selectedAccount'] ) ) {
 		
@@ -72,7 +71,7 @@ if ($session_valid) {
 				echo "Transfer History for Account #".$selectedAccount;
 			}
 			
-			$transactions = $user->getTransactions( $selectedAccount );
+			$transactions = DataAccess::getTransactions( $user, $selectedAccount );
 			$odd = true;
 			$count = 0;
 			
@@ -94,8 +93,8 @@ if ($session_valid) {
 						<td><?php echo $selectedAccount; ?></td>
 						<td><?php echo $user->name; ?></td>
 						<td><?php echo $user->email; ?></td>
-						<td><?php echo $user->getBalanceForAccount ( $selectedAccount ); ?></td>
-						<td><?php echo $user->getAvailableFundsForAccount ( $selectedAccount );; ?></td>
+						<td><?php echo TransactionController::getBalanceForAccount ( $selectedAccount ); ?></td>
+						<td><?php echo TransactionController::getAvailableFundsForAccount ( $selectedAccount );; ?></td>
 						<td><?php if ($user->useScs == 1) { echo "yes"; } else { echo "no"; } ?></td>
 					</tr>
 			    </tbody>

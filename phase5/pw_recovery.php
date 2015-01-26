@@ -22,8 +22,7 @@ if ( !isset($_SESSION['user_email']) || !isset($_SESSION['user_level']) || !isse
 
 if( isset($_GET['email']) && isset($_GET['id']) ) {
 	
-	$user = new User();
-	$user->getUserDataFromEmail($_GET['email']);
+	$user = DataAccess::getUserByEmail( $_GET['email'] );
 	
 	if( isset($_POST['password'])) {
 		
@@ -155,17 +154,14 @@ if( isset($_GET['email']) && isset($_GET['id']) ) {
 <?php 
 } else {
 	
-	$user = new User();
-	
-	$user->getUserDataFromEmail($_POST['email']);
+	$user = DataAccess::getUserByEmail ( $_POST['email'] );
 	
 	if($user->email) {
 		// if we found the mail it is a valid user
-		$user->sendPwRecoveryMail();
+		MailController::sendPwRecoveryMail( $user );
 	} else {
-		// timeout , so it's not that easy to guess existing accounts via the processing time.
-		$timeout = rand(2,4);
-		sleep($timeout);
++	// timeout for 3 seconds, so it's not that easy to guess existing accounts via the processing time.
++	sleep(3);
 	}?>
 	<!doctype html>
 	<html>

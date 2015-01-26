@@ -2,6 +2,8 @@
 ini_set( 'session.cookie_httponly', 1 );
 include_once(__DIR__."/include/db_connect.php"); 
 include_once(__DIR__."/class/c_user.php");
+include_once(__DIR__."/class/c_DataAccess.php");
+include_once(__DIR__."/class/c_UserController.php");
 include_once(__DIR__."/include/helper.php");
 include_once(__DIR__."/header.php");
 session_start();
@@ -81,15 +83,16 @@ if( !(isset( $_POST['checkLogin'] ) ) ) { ?>
 } else {
 	/* Check CSRFToken */
 	if (validateFormToken($_POST['CSRFToken'])) {
-		$user = new User();
+		
+		$user = DataAccess::getUserByEmail( $_POST['email'] );
+
 		//~ echo "<br />[DEBUG]Email: ".  $_POST['email'];
 		//~ echo "<br />[DEBUG]Password: " .  $_POST['password'];
 		
 		try { 
 		
-			if( $user->checkCredentials( $_POST ) ) {
+			if( UserController::checkCredentials( $_POST ) ) {
 				/* Set Session */
-				$user->getUserDataFromEmail($_POST['email']);
 				session_start();
 				session_regenerate_id();
 				$_SESSION['user_email'] = $user->email;

@@ -1,5 +1,6 @@
 <?php
 include_once(__DIR__."/include/helper.php");
+include_once(__DIR__."/class/c_TransactionController.php");
 include_once(__DIR__."/include/InvalidSessionException.php");
 
 if (!function_exists('render_user_header')) {
@@ -9,8 +10,8 @@ if (!function_exists('render_user_header')) {
 		<div id="header">
 				<div id="header-contents">
 					<div id="selectedAccountIcon"><?php echo $selectedAccount ?></div><!--<div class="accountInfoText"></div>-->
-					<div id="balanceAccountIcon"><?php echo $user->getBalanceForAccount ( $selectedAccount ) ?></div><!--<div class="accountInfoText"></div>-->
-					<div id="availableAccountIcon"><?php echo $user->getAvailableFundsForAccount ( $selectedAccount ) ?> </div><!--<div class="accountInfoText"></div>-->
+					<div id="balanceAccountIcon"><?php echo TransactionController::getBalanceForAccount ( $selectedAccount ) ?></div><!--<div class="accountInfoText"></div>-->
+					<div id="availableAccountIcon"><?php echo TransactionController::getAvailableFundsForAccount ( $selectedAccount ) ?> </div><!--<div class="accountInfoText"></div>-->
 				</div>
 		</div>
 		

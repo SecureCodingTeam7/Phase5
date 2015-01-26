@@ -33,8 +33,7 @@ if ( !isset($_SESSION['user_email']) || !isset($_SESSION['user_level']) || !isse
 
 else {
 	/* Session Valid */
-	$user = new User();
-	$user->getUserDataFromEmail( $_SESSION['user_email'] );
+	$user = DataAccess::getUserByEmail ( $_SESSION['user_email'] );
 	
 	if($user->useScs == "0") {
 		header("Location: ../login.php");
@@ -50,9 +49,7 @@ else {
 	if( ( isset( $_POST['downloadSCS'] )) ) { 
 		/* Check presence & validity of CSRF Token */
 		if (isset( $_POST['CSRFToken']) && validateFormToken($_POST['CSRFToken'])) {
-			/* Perform Account Creation */
-			$user = new User();
-			$user->getUserDataFromEmail( $_SESSION['user_email'] );
+			/* Create Zip File */
 			
 			$file_name = generateZipArchive( $user->pin );
 			$success = true;

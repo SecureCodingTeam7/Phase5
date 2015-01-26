@@ -22,9 +22,8 @@ try {
 
 if ($session_valid) {
 	/* Session Valid */
-	$user = new User();
+	$user = DataAccess::getUserByEmail ( $_SESSION['user_email'] );
 	$selectedAccount = "none";
-	$user->getUserDataFromEmail( $_SESSION['user_email'] );
 	
 	if ( isset( $_SESSION['selectedAccount'] ) ) {
 		
@@ -72,7 +71,7 @@ if ($session_valid) {
 				echo "Transfer History for Account #".$selectedAccount;
 			}
 			
-			$transactions = $user->getTransactions( $selectedAccount );
+			$transactions = DataAccess::getTransactions( $user, $selectedAccount );
 			$odd = true;
 			$count = 0;
 			

@@ -1,5 +1,4 @@
 <?php
-include_once(__DIR__."/InvalidSessionException.php");
 
 function randomDigits( $length ) {
 	$digits = '';

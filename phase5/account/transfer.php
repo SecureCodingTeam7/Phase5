@@ -2,6 +2,9 @@
 session_start();
 ini_set( 'session.cookie_httponly', 1 );
 include_once(__DIR__."/../class/c_user.php");
+include_once(__DIR__."/../class/c_DataAccess.php");
+include_once(__DIR__."/../class/c_TanController.php");
+include_once(__DIR__."/../class/c_TransactionController.php");
 include_once(__DIR__."/../include/helper.php");
 include_once(__DIR__."/../include/InvalidSessionException.php");
 include_once(__DIR__."/../header.php");
@@ -35,22 +38,20 @@ if ($session_valid) {
 	}
 	
 	/* Session Valid */
-	$user = new User();
+	$user = DataAccess::getUserByEmail ($_SESSION['user_email']);
 	$selectedAccount = "none";
 	$transferSuccess = 0;
 	$transferMessage = "";
-	
-	$user->getUserDataFromEmail( $_SESSION['user_email'] );
 	$requiredTAN = "-1";
 	
 	if ( isset( $_SESSION['selectedAccount'] ) ) {
 		/* Make sure account belongs to user */
 		$accounts = $user->getAccounts();
 		
-		if(in_array($_SESSION['selectedAccount'], $accounts)) {
+		if( in_array( $_SESSION['selectedAccount'], $accounts ) ) {
 			
 			$selectedAccount = $_SESSION['selectedAccount'];
-			$requiredTAN = $user->getNextTAN( $selectedAccount );
+			$requiredTAN = TanController::getNextTAN( $selectedAccount );
 			
 			if ( isset( $_POST['creditTransfer'] ) ) {
 				//echo $_POST['amount'];
@@ -59,7 +60,7 @@ if ($session_valid) {
 				//echo $_POST['tan'];
 				if (isset( $_POST['CSRFToken']) && validateFormToken($_POST['CSRFToken'])) {
 					try {
-						if( $user->transferCredits( $_POST, $selectedAccount ) ) {
+						if( TransactionController::transferCredits( $_POST, $selectedAccount, $user ) ) {
 							$transferSuccess = 1;
 							$transferMessage = "Successfully transferred " .$_POST['amount']. " Euro to " .$_POST['destination'];
 						} else {
@@ -114,7 +115,7 @@ if ($session_valid) {
 <body>
 	<div id="content">
 	
-		<?php render_user_header($selectedAccount, $user, "Transfer"); ?>
+		<?php render_user_header( $selectedAccount, $user, "Transfer" ); ?>
 		
 		<div id="main">
 
@@ -156,7 +157,7 @@ if ($session_valid) {
 					<?php if($user->useScs) {
 						echo "<label for=\"amount\"><em>SCS TAN</em></label>";
 					} else {
-						echo "<label for=\"amount\">TAN <em>#".$user->getNextTAN( $selectedAccount )."</em></label>";
+						echo "<label for=\"amount\">TAN <em>#".TanController::getNextTAN( $selectedAccount )."</em></label>";
 					}?>
 						<input id="tan" name="tan" type="text" placeholder="TAN"
 						value="<?php if (isset($_POST['tan'])) echo $_POST['tan']; ?>"

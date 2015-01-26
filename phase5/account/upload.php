@@ -26,12 +26,11 @@ if ($session_valid) {
 		}
 		
         /* Session Valid */
-        $user = new User();
+        $user = DataAccess::getUserByEmail ( $_SESSION['user_email'] );
         $selectedAccount = "none";
         $requiredTAN = -1;
         $uploadMessage = "";
-     
-        $user->getUserDataFromEmail( $_SESSION['user_email'] );
+ 
         
         if ( isset( $_SESSION['selectedAccount'] ) ) {
             $selectedAccount = $_SESSION['selectedAccount'];
@@ -52,7 +51,7 @@ if ($session_valid) {
 								if($user->useScs == "1") {
 									$tan_number = "-1";
 	                			} else {
-									$tan_number = $user->getNextTan($selectedAccount);
+									$tan_number = TanController::getNextTan( $selectedAccount );
 								}
 									
 	                            $command = "transfer_parser ".$user->id." ".$selectedAccount." ".$tan_number." ".$_FILES['myfile']['tmp_name']." 2>&1";
@@ -62,7 +61,7 @@ if ($session_valid) {
 	                            if($return == 0 ){
 	                                $uploadMessage="Transaction committed";
 									if($user->useScs == "0") {
-	                               	 $user->updateNextTan( $selectedAccount);
+	                               	 TanController::updateNextTan( $selectedAccount);
 	}
 	                                
 	                            }
@@ -132,7 +131,7 @@ if ($session_valid) {
 					</div>
 				
 					<?php if($user->useScs == "0") { ?>
-					<div class = "pure-controls" > Required Tan : #<?php echo $user->getNextTan($selectedAccount );?>
+					<div class = "pure-controls" > Required Tan : #<?php echo TanController::getNextTan( $selectedAccount );?>
 					</div>
 					<?php
 					}

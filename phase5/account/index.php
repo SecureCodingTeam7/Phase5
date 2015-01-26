@@ -2,13 +2,15 @@
 session_start();
 ini_set( 'session.cookie_httponly', 1 );
 include_once(__DIR__."/../class/c_user.php");
+include_once(__DIR__."/../class/c_DataAccess.php");
+include_once(__DIR__."/../class/c_UserController.php");
 include_once(__DIR__."/../include/helper.php");
 include_once(__DIR__."/../include/InvalidSessionException.php");
 include_once(__DIR__."/../header.php");
 
 $loginPage = "../login.php";
 $loginRedirectHeader = "Location: ".$loginPage;
-
+		
 try {
 	validateUserSession(false);
 	$session_valid = true;
@@ -31,8 +33,7 @@ if (isset($_POST['CSRFToken'])) {
 if ($session_valid) {
 	
 	/* Session Valid */
-	$user = new User();
-	$user->getUserDataFromEmail( $_SESSION['user_email'] );
+	$user = DataAccess::getUserByEmail ($_SESSION['user_email']);
 	$userAccounts = $user->getAccounts();
 	
 	/* Generate Form Token (valid for this session) */
@@ -164,7 +165,7 @@ if ($session_valid) {
 
 			<?php
 			foreach($userAccounts as $account) {
-					$transactions = $user->getTransactions( $account );
+					$transactions = DataAccess::getTransactions( $user, $account );
 					$odd = true;
 					$count = 0;
 					
