@@ -1,0 +1,13 @@
+\chapter{Cross Site Request Forgery}
+
+Team 6 stated in their report that our web application is vulnerable to XSS and CSRF. We could not verify that because the report does not really state what is going wrong in our application. Thus we had a look at the demo video of the presentation of team 6.
+
+In this video they copied the CSRF token which is normally only known by the user and not by an attacker, into an own script, which then does some magic and shows the balance of the current user, when executed in the same browser the user is logged in.
+
+We do not think that this is a real vulnerability, because the attacker normally does not know the session id and the CSRF token, which is both used in this exploit. It is more like saying, when I have the login credentials I can easily login, but this is not a vulnerability.
+
+Furthermore the CSRF token is regenerated every time the user logs. Team 6 stated that this does not happen, we could not reproduce this problem.
+
+\chapter{.git files accessible}
+
+Furthermore the report of team 6 states that a .git directory is accessible. We could not find any .git directory in our apache document root. 
